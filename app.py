@@ -174,6 +174,35 @@ st.markdown("""
         color: #ffffff !important;
         border-radius: 8px 8px 0 0 !important;
     }
+            
+    /* Fix dataframe scrollbar and headers */
+    [data-testid="stDataFrame"] {
+        background: transparent !important;
+    }
+
+    [data-testid="stDataFrame"] iframe {
+        background: #1a1f2e !important;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.4);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.7);
+    }
 </style>
 """, unsafe_allow_html=True)
 

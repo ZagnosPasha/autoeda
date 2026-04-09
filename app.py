@@ -44,7 +44,9 @@ st.markdown("""
     }
 
     .narrative-box {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+        background: linear-gradient(135deg,
+            rgba(99, 102, 241, 0.2),
+            rgba(139, 92, 246, 0.15));
         border: 1px solid rgba(99, 102, 241, 0.4);
         border-radius: 16px;
         padding: 24px 28px;
@@ -102,6 +104,20 @@ st.markdown("""
     p, span, div, label {
         color: rgba(255,255,255,0.85);
     }
+
+    .preview-box {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    code {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #a5b4fc !important;
+        border-radius: 4px;
+        padding: 2px 6px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -132,6 +148,19 @@ if uploaded_file is not None:
 
     summary        = get_summary(df)
     missing_report = get_missing_report(df)
+    col_stats      = get_column_stats(df)
+
+    st.markdown("---")
+
+    # ── File preview ──────────────────────────────────────────────────────────
+    with st.expander("👁️  Preview uploaded file", expanded=False):
+        st.markdown(
+            f'<p style="color:rgba(255,255,255,0.5);font-size:13px;">'
+            f'Showing first 5 rows of <b>{uploaded_file.name}</b> '
+            f'— {summary["rows"]} rows × {summary["columns"]} columns</p>',
+            unsafe_allow_html=True
+        )
+        st.dataframe(df.head(), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
@@ -159,21 +188,45 @@ if uploaded_file is not None:
 
     st.markdown("---")
 
+    # ── Column statistics ──────────────────────────────────────────────────────
+    st.markdown("### Column statistics")
+    with st.expander("📋  View detailed column statistics", expanded=False):
+        stats_rows = []
+        for col_name, values in col_stats.items():
+            row = {"column": col_name}
+            row.update(values)
+            stats_rows.append(row)
+        stats_df = pd.DataFrame(stats_rows)
+        st.dataframe(stats_df, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
     # ── Missing values table ───────────────────────────────────────────────────
     st.markdown("### Missing values report")
 
     missing_df = pd.DataFrame(missing_report)
 
-    def colour_flag(val):
-        if val == "HIGH":
-            return "color: #f87171; font-weight: 600"
-        elif val == "LOW":
-            return "color: #fbbf24; font-weight: 600"
-        else:
-            return "color: #34d399; font-weight: 600"
+    # Filter to only columns WITH missing values
+    missing_only = missing_df[missing_df["missing"] > 0]
 
-    styled = missing_df.style.map(colour_flag, subset=["flag"])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    if missing_only.empty:
+        st.success("✅ Great news — no missing values found in this dataset.")
+    else:
+        st.warning(
+            f"⚠️ {len(missing_only)} column(s) have missing values "
+            f"out of {summary['columns']} total."
+        )
+
+        def colour_flag(val):
+            if val == "HIGH":
+                return "color: #f87171; font-weight: 600"
+            elif val == "LOW":
+                return "color: #fbbf24; font-weight: 600"
+            else:
+                return "color: #34d399; font-weight: 600"
+
+        styled = missing_only.style.map(colour_flag, subset=["flag"])
+        st.dataframe(styled, use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
@@ -189,10 +242,10 @@ if uploaded_file is not None:
     with tab1:
         numeric_cols = df.select_dtypes(include="number").columns.tolist()
         text_cols    = df.select_dtypes(include="str").columns.tolist()
+        cols_per_row = 2
 
         if numeric_cols:
             st.markdown("**Numeric columns**")
-            cols_per_row = 2
             for i in range(0, len(numeric_cols), cols_per_row):
                 row_cols = st.columns(cols_per_row)
                 for j, col in enumerate(numeric_cols[i:i+cols_per_row]):
@@ -202,23 +255,88 @@ if uploaded_file is not None:
                             ax = fig.axes[0]
                             ax.set_xlim(left=df[col].min())
                             st.pyplot(fig)
+                        with st.expander("📋 Copy code"):
+                            st.code(f"""
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("your_file.csv")
+df["{col}"].hist(bins=30, color="steelblue", edgecolor="white")
+plt.title("Distribution of {col}")
+plt.xlabel("{col}")
+plt.ylabel("Count")
+plt.xlim(left=df["{col}"].min())
+plt.show()
+""", language="python")
 
         if text_cols:
             st.markdown("**Categorical columns**")
-            cols_per_row = 2
             for i in range(0, len(text_cols), cols_per_row):
                 row_cols = st.columns(cols_per_row)
                 for j, col in enumerate(text_cols[i:i+cols_per_row]):
                     with row_cols[j]:
                         st.pyplot(plot_bar(df, col))
+                        with st.expander("📋 Copy code"):
+                            st.code(f"""
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("your_file.csv")
+counts = df["{col}"].value_counts().head(10)
+plt.bar(range(len(counts)), counts.values,
+        color="steelblue", edgecolor="white")
+plt.xticks(range(len(counts)), counts.index, rotation=45)
+plt.title("Value counts of {col}")
+plt.xlabel("{col}")
+plt.ylabel("Count")
+plt.tight_layout()
+plt.show()
+""", language="python")
 
     with tab2:
         st.pyplot(plot_correlation(df))
+        with st.expander("📋 Copy code"):
+            st.code("""
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("your_file.csv")
+corr = df.corr(numeric_only=True)
+fig, ax = plt.subplots(figsize=(10, 5))
+sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+plt.title("Correlation Heatmap")
+plt.show()
+""", language="python")
 
     with tab3:
-        st.pyplot(plot_missing(missing_report))
+        # Only show missing chart if there are missing values
+        if missing_only.empty:
+            st.success("✅ No missing values — nothing to show here.")
+        else:
+            st.pyplot(plot_missing(missing_report))
+            with st.expander("📋 Copy code"):
+                st.code("""
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("your_file.csv")
+missing = df.isnull().sum()
+missing = missing[missing > 0]
+missing_pct = (missing / len(df) * 100).round(1)
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(range(len(missing_pct)), missing_pct.values,
+        color="steelblue", edgecolor="white")
+ax.set_yticks(range(len(missing_pct)))
+ax.set_yticklabels(missing_pct.index)
+ax.set_title("Missing values per column")
+ax.set_xlabel("Missing %")
+plt.tight_layout()
+plt.show()
+""", language="python")
 
 else:
+    # ── Empty state ────────────────────────────────────────────────────────────
     st.markdown("""
     <div style="text-align:center;padding:60px 20px;">
         <div style="font-size:48px;margin-bottom:16px;">📂</div>

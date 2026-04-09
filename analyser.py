@@ -6,7 +6,10 @@ def load_data(file_path):
         filename = file_path.name if hasattr(file_path, "name") else file_path
 
         if filename.endswith(".csv"):          # ← filename not file_path
-            df = pd.read_csv(file_path)
+            try:
+                df = pd.read_csv(file_path, encoding="utf-8")
+            except UnicodeDecodeError:
+                df = pd.read_csv(file_path, encoding="latin1")
             rows, cols = df.shape
             print(f"Loaded {filename} - {rows} rows and {cols} columns")
             return df

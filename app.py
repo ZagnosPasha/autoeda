@@ -4,37 +4,34 @@ from analyser import load_data, get_summary, get_missing_report, get_column_stat
 from visualiser import plot_histogram, plot_bar, plot_correlation, plot_missing
 from narrator import generate_narrative
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Perceiv",
     page_icon="📊",
     layout="wide"
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
+# ── Custom CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Main background */
     .stApp {
-        background: linear-gradient(135deg, #0f1117 0%, #1a1f2e 100%);
+        background: linear-gradient(135deg, #1a1f2e 0%, #242938 100%);
     }
 
-    /* Metric cards — glassmorphism */
     [data-testid="metric-container"] {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 16px;
         backdrop-filter: blur(10px);
     }
 
     [data-testid="metric-container"] label {
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: rgba(255, 255, 255, 0.8) !important;
         font-size: 12px !important;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -46,10 +43,9 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* AI narrative box */
     .narrative-box {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
-        border: 1px solid rgba(99, 102, 241, 0.3);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+        border: 1px solid rgba(99, 102, 241, 0.4);
         border-radius: 16px;
         padding: 24px 28px;
         margin: 16px 0;
@@ -71,12 +67,10 @@ st.markdown("""
         line-height: 1.8;
     }
 
-    /* Section headers */
     h2, h3 {
         color: #ffffff !important;
     }
 
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
         background: rgba(255,255,255,0.05);
         border-radius: 10px;
@@ -95,44 +89,32 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* Dataframe */
-    .stDataFrame {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    /* Upload area */
     [data-testid="stFileUploadDropzone"] {
         background: rgba(255,255,255,0.03);
         border: 2px dashed rgba(99, 102, 241, 0.4);
         border-radius: 16px;
     }
 
-    /* Divider */
     hr {
         border-color: rgba(255,255,255,0.08);
     }
 
-    /* Flag colors in table */
-    .flag-high { color: #f87171; font-weight: 600; }
-    .flag-low  { color: #fbbf24; font-weight: 600; }
-    .flag-clean { color: #34d399; font-weight: 600; }
+    p, span, div, label {
+        color: rgba(255,255,255,0.85);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Header ────────────────────────────────────────────────────────────────────
-col_logo, col_title = st.columns([1, 11])
-with col_title:
-    st.markdown("## 📊 Perceiv")
-    st.markdown(
-        '<p style="color:rgba(255,255,255,0.5);margin-top:-12px;font-size:14px;">'
-        'Upload any dataset and get instant AI-powered analysis</p>',
-        unsafe_allow_html=True
-    )
-
+# ── Header ─────────────────────────────────────────────────────────────────────
+st.markdown("## 📊 Perceiv")
+st.markdown(
+    '<p style="color:rgba(255,255,255,0.5);margin-top:-12px;font-size:14px;">'
+    'Upload any dataset and get instant AI-powered analysis</p>',
+    unsafe_allow_html=True
+)
 st.markdown("---")
 
-# ── File upload ───────────────────────────────────────────────────────────────
+# ── File upload ────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
     "Drop your CSV or Excel file here",
     type=["csv", "xlsx"],
@@ -148,12 +130,12 @@ if uploaded_file is not None:
         st.error("Could not load file. Please check the format and try again.")
         st.stop()
 
-    summary = get_summary(df)
+    summary        = get_summary(df)
     missing_report = get_missing_report(df)
 
     st.markdown("---")
 
-    # ── AI Narrative — FIRST ─────────────────────────────────────────────────
+    # ── AI Narrative — FIRST ──────────────────────────────────────────────────
     with st.spinner("🤖 Analysing your dataset..."):
         narrative = generate_narrative(summary, missing_report)
 
@@ -166,7 +148,7 @@ if uploaded_file is not None:
 
     st.markdown("---")
 
-    # ── Summary metrics ───────────────────────────────────────────────────────
+    # ── Summary metrics ────────────────────────────────────────────────────────
     st.markdown("### Dataset overview")
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Rows",         summary["rows"])
@@ -177,10 +159,9 @@ if uploaded_file is not None:
 
     st.markdown("---")
 
-    # ── Missing values table ──────────────────────────────────────────────────
+    # ── Missing values table ───────────────────────────────────────────────────
     st.markdown("### Missing values report")
 
-    # Colour code the flag column
     missing_df = pd.DataFrame(missing_report)
 
     def colour_flag(val):
@@ -191,12 +172,12 @@ if uploaded_file is not None:
         else:
             return "color: #34d399; font-weight: 600"
 
-    styled = missing_df.style.applymap(colour_flag, subset=["flag"])
+    styled = missing_df.style.map(colour_flag, subset=["flag"])
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
-    # ── Charts in tabs ────────────────────────────────────────────────────────
+    # ── Charts in tabs ─────────────────────────────────────────────────────────
     st.markdown("### Visualisations")
 
     tab1, tab2, tab3 = st.tabs([
@@ -218,13 +199,13 @@ if uploaded_file is not None:
                     with row_cols[j]:
                         fig = plot_histogram(df, col)
                         if fig:
-                            # Fix x-axis to start from actual data min
                             ax = fig.axes[0]
                             ax.set_xlim(left=df[col].min())
                             st.pyplot(fig)
 
         if text_cols:
             st.markdown("**Categorical columns**")
+            cols_per_row = 2
             for i in range(0, len(text_cols), cols_per_row):
                 row_cols = st.columns(cols_per_row)
                 for j, col in enumerate(text_cols[i:i+cols_per_row]):
@@ -238,14 +219,13 @@ if uploaded_file is not None:
         st.pyplot(plot_missing(missing_report))
 
 else:
-    # Empty state
     st.markdown("""
-    <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.3);">
+    <div style="text-align:center;padding:60px 20px;">
         <div style="font-size:48px;margin-bottom:16px;">📂</div>
-        <div style="font-size:18px;font-weight:500;color:rgba(255,255,255,0.5);">
+        <div style="font-size:18px;font-weight:500;color:rgba(255,255,255,0.6);">
             Upload a CSV or Excel file to get started
         </div>
-        <div style="font-size:14px;margin-top:8px;">
+        <div style="font-size:14px;margin-top:8px;color:rgba(255,255,255,0.3);">
             Supports .csv and .xlsx — up to 200MB
         </div>
     </div>

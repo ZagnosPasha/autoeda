@@ -118,6 +118,45 @@ st.markdown("""
         border-radius: 4px;
         padding: 2px 6px;
     }
+
+    /* Fix expander hover */
+    .streamlit-expanderHeader:hover {
+        background: rgba(99, 102, 241, 0.2) !important;
+        color: #ffffff !important;
+    }
+
+    .streamlit-expanderHeader {
+        background: rgba(255,255,255,0.05) !important;
+        border-radius: 8px !important;
+        color: rgba(255,255,255,0.8) !important;
+    }
+
+    /* Fix code block */
+    .stCodeBlock {
+        background: #0d1117 !important;
+    }
+
+    .stCodeBlock code {
+        background: transparent !important;
+        color: #c9d1d9 !important;
+    }
+
+    pre {
+        background: #0d1117 !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 8px !important;
+    }
+
+    pre code {
+        color: #c9d1d9 !important;
+        background: transparent !important;
+    }
+
+    [data-testid="stExpander"] {
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 12px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 

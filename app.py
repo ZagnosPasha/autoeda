@@ -4,9 +4,9 @@ from analyser import load_data, get_summary, get_missing_report, get_column_stat
 from visualiser import plot_histogram, plot_bar, plot_correlation, plot_missing
 from narrator import generate_narrative
 
-st.set_page_config(page_title="AutoEDA", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Perceiv", page_icon="📊", layout="wide")
 
-st.title("📊 AutoEDA")
+st.title("📊 Perceiv")
 st.write("Upload a dataset and get instant AI-powered analysis")
 
 uploaded_file = st.file_uploader("Upload your CSV or Excel file", type=["csv", "xlsx"])

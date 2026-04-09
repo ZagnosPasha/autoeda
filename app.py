@@ -152,10 +152,27 @@ st.markdown("""
         background: transparent !important;
     }
 
-    [data-testid="stExpander"] {
+    [data-testid="stExpander"] details {
         background: rgba(255,255,255,0.03) !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
         border-radius: 12px !important;
+    }
+
+    [data-testid="stExpander"] details summary {
+        background: rgba(255,255,255,0.05) !important;
+        border-radius: 8px !important;
+        color: rgba(255,255,255,0.8) !important;
+    }
+
+    [data-testid="stExpander"] details summary:hover {
+        background: rgba(99, 102, 241, 0.2) !important;
+        color: #ffffff !important;
+    }
+
+    [data-testid="stExpander"] details[open] summary {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #ffffff !important;
+        border-radius: 8px 8px 0 0 !important;
     }
 </style>
 """, unsafe_allow_html=True)

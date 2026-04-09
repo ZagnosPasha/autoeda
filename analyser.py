@@ -5,15 +5,18 @@ def load_data(file_path):
     try:
         filename = file_path.name if hasattr(file_path, "name") else file_path
 
-        if filename.endswith(".csv"):          # ← filename not file_path
+        if filename.endswith(".csv"):          
             try:
+                file_path.seek(0)
                 df = pd.read_csv(file_path, encoding="utf-8")
             except UnicodeDecodeError:
+                file_path.seek(0)
                 df = pd.read_csv(file_path, encoding="latin1")
             rows, cols = df.shape
             print(f"Loaded {filename} - {rows} rows and {cols} columns")
             return df
-        elif filename.endswith(".xlsx"):       # ← filename not file_path
+        elif filename.endswith(".xlsx"): 
+            file_path.seek(0)      
             df = pd.read_excel(file_path)
             rows, cols = df.shape
             print(f"Loaded {filename} - {rows} rows and {cols} columns")

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: transparent; padding: 16px; }
+
+@media (prefers-color-scheme: dark) {
+  body { color: #e0e0e0; }
+  .card { background: #1e1e1e; border-color: #2e2e2e; }
+  .card:hover { border-color: #444; background: #222; }
+  .card.selected { border-color: #7c6ef5; background: #1a1830; }
+  .phase-bar { background: #2a2a2a; }
+  .tag { background: #2a2a2a; color: #bbb; }
+  .tag.core { background: #1a2a1a; color: #6fcf97; }
+  .tag.ai { background: #1a1830; color: #a89cf5; }
+  .tag.platform { background: #1e2a30; color: #5ba3d9; }
+  .tag.enterprise { background: #2a1f0d; color: #e0b84d; }
+  .tag.future { background: #2a1a1a; color: #e07070; }
+  .detail { background: #222; border-color: #333; }
+  .why-box { background: #1a1a2a; border-color: #333; }
+  .metric-pill { background: #2a2a2a; color: #ccc; }
+  .phase-label { color: #888; }
+  .yr { color: #a89cf5; }
+  .section-hd { color: #777; }
+  .nav-btn { background: #2a2a2a; border-color: #3a3a3a; color: #bbb; }
+  .nav-btn:hover { background: #333; }
+  .nav-btn.on { background: #2a2560; border-color: #7c6ef5; color: #a89cf5; }
+  .prog-track { background: #2a2a2a; }
+}
+@media (prefers-color-scheme: light) {
+  body { color: #1a1a1a; }
+  .card { background: #fff; border-color: #eee; }
+  .card:hover { border-color: #ccc; background: #fafafa; }
+  .card.selected { border-color: #534ab7; background: #f5f4fe; }
+  .phase-bar { background: #f0f0f0; }
+  .tag { background: #f0f0f0; color: #555; }
+  .tag.core { background: #e6f4ea; color: #1a7a3a; }
+  .tag.ai { background: #eeedfe; color: #534ab7; }
+  .tag.platform { background: #e6f1fb; color: #185fa5; }
+  .tag.enterprise { background: #fef3cd; color: #9a6700; }
+  .tag.future { background: #fdecea; color: #c0392b; }
+  .detail { background: #fafafa; border-color: #eee; }
+  .why-box { background: #f5f4fe; border-color: #dddcf5; }
+  .metric-pill { background: #f0f0f0; color: #555; }
+  .phase-label { color: #999; }
+  .yr { color: #534ab7; }
+  .section-hd { color: #aaa; }
+  .nav-btn { background: #f5f5f5; border-color: #ddd; color: #555; }
+  .nav-btn:hover { background: #eee; }
+  .nav-btn.on { background: #eeedfe; border-color: #534ab7; color: #534ab7; }
+  .prog-track { background: #eee; }
+}
+
+.top-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.nav-btn { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; border: 1px solid; cursor: pointer; transition: all 0.18s; letter-spacing: 0.02em; }
+
+.prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.prog-track { flex: 1; height: 3px; border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, #534ab7, #1D9E75); border-radius: 2px; transition: width 0.4s ease; }
+.prog-label { font-size: 11px; color: #999; white-space: nowrap; }
+
+.phase-header { margin-bottom: 14px; }
+.phase-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.phase-sub { font-size: 13px; margin-top: 4px; }
+.phase-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.metric-pill { font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; }
+
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.card { border: 1px solid; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.18s; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 6px; }
+.card-name { font-size: 13px; font-weight: 600; line-height: 1.3; flex: 1; }
+.tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.card-desc { font-size: 12px; line-height: 1.5; }
+
+.detail { border: 1px solid; border-radius: 12px; padding: 16px; margin-bottom: 14px; min-height: 140px; }
+.detail-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.detail-desc { font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+.why-box { border: 1px solid; border-radius: 8px; padding: 10px 14px; }
+.why-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.why-items { display: flex; flex-direction: column; gap: 4px; }
+.why-item { font-size: 12px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.why-dot { width: 4px; height: 4px; border-radius: 50%; background: #534ab7; margin-top: 6px; flex-shrink: 0; }
+@media (prefers-color-scheme: dark) { .why-dot { background: #a89cf5; } }
+
+.section-hd { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.placeholder { font-size: 13px; text-align: center; padding: 30px; opacity: 0.5; }
+.phase-bar { border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+.phase-bar-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+.phase-name { font-size: 13px; font-weight: 600; }
+.phase-label { font-size: 12px; }
+.yr { font-size: 22px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="top-nav" id="topnav"></div>
+
+<div class="prog-row">
+  <span class="prog-label" id="prog-yr">2026</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:10%"></div></div>
+  <span class="prog-label">2036</span>
+</div>
+
+<div class="phase-bar" id="phase-bar"></div>
+<div class="section-hd" id="feat-label">Features — click any card to learn more</div>
+<div class="features-grid" id="grid"></div>
+<div class="detail" id="detail"><div class="placeholder">← Click a feature card to see the full rationale</div></div>
+
+<script>
+const phases = [
+  {
+    year: 2026,
+    name: "Phase 1 — Core MVP",
+    sub: "The foundation: upload, understand, explain",
+    pills: ["Streamlit Cloud", "Solo founder", "Free", "First 50 users"],
+    color: "#1D9E75",
+    features: [
+      { name: "CSV & Excel upload", cat: "core", desc: "Drag and drop any raw file. Handles messy real-world data gracefully.", why: ["The entire product starts here — no database, no SQL, no setup", "Removes the single biggest barrier for non-technical users", "Differentiates from Julius and BlazeSQL which need clean connected data"] },
+      { name: "Missing value report", cat: "core", desc: "Per-column missing count, percentage, and HIGH / LOW / CLEAN flag automatically.", why: ["The most universally painful EDA problem — every dataset has missing values", "Researchers and analysts spend hours manually checking this", "HIGH/LOW/CLEAN flags make it actionable, not just informational"] },
+      { name: "Auto column statistics", cat: "core", desc: "Mean, median, std, min, max per numeric column. Value counts for categoricals.", why: ["Replaces 10+ lines of pandas code with zero effort", "First thing any analyst needs to understand a new dataset", "Gives non-technical users language to describe their data"] },
+      { name: "Auto chart generation", cat: "core", desc: "Histograms, bar charts, correlation heatmap, missing value chart — all automatic.", why: ["Visual understanding is faster than reading numbers", "Non-technical users can't generate these without matplotlib knowledge", "Each chart answers a different question about the data's shape"] },
+      { name: "AI plain-English narrative", cat: "ai", desc: "LLM reads your stats and writes a paragraph explaining what your data looks like and what to watch out for.", why: ["The feature no competitor offers — Julius gives charts, not explanations", "Non-technical users need someone to tell them what the numbers mean", "This is AutoEDA's core defensible moat in Phase 1"] },
+      { name: "Pandas/matplotlib code export", cat: "core", desc: "Copy clean reproducible code for any chart or analysis. Paste into Jupyter.", why: ["Bridges AutoEDA and technical workflows — power users love this", "Creates a habit loop: use AutoEDA first, then build on its code", "No other auto-EDA tool exports clean reusable code"] }
+    ]
+  },
+  {
+    year: 2027,
+    name: "Phase 2 — Smarter & Shareable",
+    sub: "First revenue. Real users asking real questions.",
+    pills: ["Cloud Run", "First paying users", "$5K MRR target", "LaunchHUB grad"],
+    color: "#534ab7",
+    features: [
+      { name: "Natural language Q&A", cat: "ai", desc: "Ask questions about your data in plain English. AutoEDA generates the analysis and answer.", why: ["Most requested feature after Phase 1 based on user feedback", "Transforms AutoEDA from a report tool into a conversation partner", "Directly competes with Julius AI but on messier, rawer data"] },
+      { name: "Data quality recommendations", cat: "ai", desc: "AI suggests how to fix missing values, outliers, and type mismatches — with code.", why: ["Closes the loop: 'here's the problem' becomes 'here's what to do'", "NGO analysts need guidance, not just diagnosis", "Adds a second AI layer that deepens the moat"] },
+      { name: "Outlier detection & flagging", cat: "core", desc: "IQR and z-score based outlier detection with visual markers and explanation.", why: ["Outliers silently corrupt analyses — catching them is high value", "Non-technical users have no way to spot outliers without code", "Pairs naturally with the missing value report as a data quality suite"] },
+      { name: "PDF / HTML report export", cat: "platform", desc: "Download a professional report: summary + charts + AI narrative in one document.", why: ["Users need to share findings with managers, donors, or ethics boards", "A polished report increases perceived value of AutoEDA dramatically", "First monetisation hook — report export behind a paywall"] },
+      { name: "User accounts (basic)", cat: "platform", desc: "Save previous analyses, revisit datasets, track history across sessions.", why: ["Stateless Streamlit means users lose everything on refresh — huge pain point", "Session memory is the minimum viable product for returning users", "Unlocks freemium model: free analyses, paid history and saved reports"] },
+      { name: "Duplicate row detection", cat: "core", desc: "Automatically flag duplicate rows with count and percentage.", why: ["A universally painful data quality problem across all domains", "Takes seconds to check manually, feels magic when it's automatic", "Adds to the data quality suite alongside missing values and outliers"] }
+    ]
+  },
+  {
+    year: 2028,
+    name: "Phase 3 — Platform Foundations",
+    sub: "Multi-file, cleaning, API. Becoming a data workflow.",
+    pills: ["GCP Cloud Run", "$25K MRR", "3–4 person team", "First angel round"],
+    color: "#185fa5",
+    features: [
+      { name: "Data cleaning assistant", cat: "ai", desc: "One-click fixes: impute missing values, drop constant columns, encode categoricals. Download clean CSV.", why: ["After diagnosis comes treatment — users are frustrated when AutoEDA shows problems but can't fix them", "Clean CSV download is a natural Phase 3 product unlock", "Enterprise buyers will pay specifically for this — it saves hours of pandas work"] },
+      { name: "Multi-file upload & join suggestions", cat: "platform", desc: "Upload 2+ files, AutoEDA suggests join keys and shows what a merged dataset would look like.", why: ["Real-world data rarely comes in a single file", "NGOs and researchers receive multiple related exports constantly", "No competitor in the mid-market handles raw multi-file joining gracefully"] },
+      { name: "Domain templates", cat: "platform", desc: "Pre-built analysis templates for Health, Finance, Survey, and HR data — with domain-specific checks.", why: ["A healthcare CSV needs different checks than a sales CSV", "Templates let AutoEDA speak the user's language rather than generic statistics", "Opens vertical SaaS pricing — AutoEDA Health at a premium tier"] },
+      { name: "AutoEDA API (beta)", cat: "enterprise", desc: "Programmatic access to AutoEDA's analysis engine. Pass a CSV, get back JSON stats + narrative.", why: ["Developers want to embed AutoEDA in their own tools and pipelines", "API revenue is high-margin and compounds — pay per analysis call", "Positions AutoEDA as infrastructure, not just an app"] },
+      { name: "Collaborative sharing", cat: "platform", desc: "Share a live analysis link with colleagues. Comments, annotations, and version history.", why: ["Most analyses are shared, not kept private — collaboration is table stakes", "Organisations need audit trails for data governance and ethics", "Slack and Teams integrations follow naturally from sharing infrastructure"] },
+      { name: "Scheduled analysis runs", cat: "platform", desc: "Connect a data source, set a schedule, get an updated report every Monday morning automatically.", why: ["Transforms AutoEDA from a one-time tool into an ongoing workflow", "Marketing and ops teams want weekly automated data health reports", "Recurring analysis = recurring revenue, lower churn"] }
+    ]
+  },
+  {
+    year: 2029,
+    name: "Phase 4 — Vertical Depth",
+    sub: "Own three verticals. First international customers.",
+    pills: ["$80K MRR", "Startmate cohort", "Singapore office", "6–8 team"],
+    color: "#9a6700",
+    features: [
+      { name: "AutoEDA Health vertical", cat: "enterprise", desc: "Purpose-built for WHO, UNICEF, clinical trial, and public health data formats. FHIR, REDCap, ODK support.", why: ["Health data has unique formats, privacy requirements, and quality standards", "WHO and UNICEF datasets are a global underserved market with real budgets", "ClinicalTrials.gov, APRA, GDPR compliance built in as a feature"] },
+      { name: "AutoEDA Finance vertical", cat: "enterprise", desc: "Balance sheet analysis, APRA-compliant data quality reporting, financial time series profiling.", why: ["Financial data has regulatory mandates that create non-optional spending", "APRA CPS230 compliance (the Fluency angle) applies to data quality too", "Enterprise financial clients pay 10x more than individual analysts"] },
+      { name: "AutoEDA Survey vertical", cat: "enterprise", desc: "Native support for Kobo, SurveyCTO, ODK, and REDCap exports. Skip logic, weighted data, codebook generation.", why: ["Survey data is the most common data format in NGO and academic research", "Existing tools handle survey exports terribly — huge unmet need", "Codebook generation alone is worth paying for in academic research"] },
+      { name: "Version history & dataset comparison", cat: "platform", desc: "Compare two versions of the same dataset. See what changed, what was added, what was removed.", why: ["Organisations update their datasets monthly — drift detection is critical", "A compliance team needs to prove data quality improved over time", "Version history creates lock-in — users don't want to leave if their history is there"] },
+      { name: "SSO & team management", cat: "enterprise", desc: "Single sign-on, role-based access, team workspaces, usage dashboards for admins.", why: ["Enterprise procurement requires SSO — it's a non-negotiable gate", "Team management unlocks per-seat pricing instead of individual subscriptions", "Admin dashboards make the buyer (IT manager) happy, not just the user"] },
+      { name: "Custom AI narrative fine-tuning", cat: "ai", desc: "Train AutoEDA's narrative on your organisation's terminology, style guide, and domain knowledge.", why: ["Enterprise users want outputs that sound like their company, not generic AI", "Custom fine-tuning creates deep lock-in — switching means retraining", "Opens a professional services revenue stream — implementation fees"] }
+    ]
+  },
+  {
+    year: 2030,
+    name: "Phase 5 — Series A Features",
+    sub: "Database connections. Compete globally.",
+    pills: ["$3M ARR", "Series A $5M", "15–20 team", "DB connections live"],
+    color: "#185fa5",
+    features: [
+      { name: "Database connections", cat: "platform", desc: "Connect Postgres, BigQuery, Snowflake, Redshift directly. Run AutoEDA on live tables.", why: ["The move every auto-EDA tool must make to serve enterprise", "Julius AI's home turf — AutoEDA arrives with a loyal user base and better narrative layer", "Database connections unlock recurring analysis on live data"] },
+      { name: "AutoML lite", cat: "ai", desc: "Suggest and run a baseline model on your dataset. Show accuracy, feature importance, and plain-English interpretation.", why: ["EDA is step 1 — the natural next question is 'what predicts what?'", "Non-technical users want predictions, not just descriptions", "Bridges AutoEDA from analysis to modelling — massive market expansion"] },
+      { name: "Feature engineering recommendations", cat: "ai", desc: "AI suggests transformations: log scale this column, bin that one, encode this categorical.", why: ["Feature engineering is the most time-consuming step before modelling", "AutoEDA already understands the data — recommendations are a natural extension", "Saves data scientists hours on every new dataset"] },
+      { name: "Multilingual narratives", cat: "ai", desc: "AI narratives in Bahasa Indonesia, Filipino, Hindi, Swahili, French — for global NGO and research markets.", why: ["AutoEDA's biggest global opportunity is non-English-speaking research communities", "A WHO analyst in Jakarta reading a narrative in Bahasa is a completely different product", "No competitor serves this market — genuine blue ocean in 30+ languages"] },
+      { name: "Mobile app", cat: "platform", desc: "iOS and Android app. Upload a photo of a spreadsheet or connect cloud storage. Get instant analysis on your phone.", why: ["Field researchers in developing markets primarily work on phones, not laptops", "Photo-to-data (OCR) unlocks paper-based data collection use cases", "Mobile-first is the norm in Southeast Asia and Africa — AutoEDA's key markets"] },
+      { name: "Regulatory compliance reports", cat: "enterprise", desc: "Auto-generate GDPR, APRA, HIPAA-ready data quality reports with audit trails.", why: ["Compliance reporting is mandatory spending — recession-proof revenue", "An audit-ready data quality report is worth thousands per month to a regulated entity", "Positions AutoEDA as governance infrastructure, not just an analytics tool"] }
+    ]
+  },
+  {
+    year: 2031,
+    name: "Phase 6 — Platform & Ecosystem",
+    sub: "Marketplace. Copilot. Become infrastructure.",
+    pills: ["$8M ARR", "50+ team", "Global users", "VS Code extension"],
+    color: "#0f6e56",
+    features: [
+      { name: "AutoEDA Copilot (VS Code / Jupyter)", cat: "platform", desc: "Inline EDA suggestions as you code. Highlight a DataFrame, get instant profiling in your IDE.", why: ["Meets technical users where they already work", "VS Code has 73M users — even 0.01% adoption is 7,300 users", "Copilot creates daily active usage — the holy grail of developer tools"] },
+      { name: "Community Marketplace", cat: "platform", desc: "Share and discover analysis templates, custom checks, and domain-specific narratives built by the AutoEDA community.", why: ["Marketplaces create network effects — value increases with each contributor", "Community templates extend AutoEDA into niches the core team would never reach", "Revenue share from premium marketplace templates is a new income stream"] },
+      { name: "Real-time streaming analysis", cat: "enterprise", desc: "Connect Kafka, Kinesis, or Pub/Sub streams. Get continuous data quality monitoring as data flows in.", why: ["Enterprises increasingly have streaming data, not just batch files", "Real-time data quality alerts are a premium enterprise feature", "Positions AutoEDA in the data observability space alongside Monte Carlo and Great Expectations"] },
+      { name: "AutoEDA for Government", cat: "enterprise", desc: "Procurement-ready package: on-premises deployment, air-gapped mode, sovereign cloud options.", why: ["Government contracts are large, sticky, and slow to cancel", "Australian federal and state agencies have mandatory data quality reporting", "Procurement-ready means fewer barriers to signing six-figure contracts"] },
+      { name: "Partner embed API", cat: "platform", desc: "White-label AutoEDA's analysis engine inside other SaaS products. Revenue share model.", why: ["Every data product needs EDA — AutoEDA becomes infrastructure for other tools", "Partners bring their own users — distribution without marketing spend", "White-label is 10x higher revenue per customer than individual subscriptions"] },
+      { name: "Data lineage & provenance tracking", cat: "enterprise", desc: "Track where data came from, what transformations were applied, and who analysed it.", why: ["Data governance is a top enterprise priority in 2026 and beyond", "Lineage tracking is required for GDPR Article 30 compliance", "Creates an audit trail that makes AutoEDA legally defensible for regulated industries"] }
+    ]
+  },
+  {
+    year: 2032,
+    name: "Phase 7 — Global Scale",
+    sub: "Series B. Agentic AI. 200K users.",
+    pills: ["$20M ARR", "Series B $20M", "80–100 team", "Agentic analysis"],
+    color: "#a32d2d",
+    features: [
+      { name: "Agentic data investigation", cat: "ai", desc: "AutoEDA autonomously plans, executes, and interprets a multi-step analysis workflow. No prompting required.", why: ["The inevitable direction of all AI tools — from assistant to autonomous agent", "Agentic analysis can investigate complex questions that take humans hours", "Snowflake invested $200M in Anthropic specifically for this use case in enterprise data"] },
+      { name: "AutoEDA for Climate & SDG data", cat: "enterprise", desc: "Native support for UN SDG indicators, climate datasets, IPCC formats, and satellite data profiles.", why: ["UN agencies and climate researchers are a global, well-funded market", "Climate data has unique formats and quality requirements no tool handles well", "AutoEDA Climate positions the company in the ESG analytics space"] },
+      { name: "AutoEDA Academy", cat: "platform", desc: "Certification program for analysts. AutoEDA Certified Data Analyst — 5,000 certified in year 1.", why: ["Certifications create professional identity around your platform", "Certified analysts become internal champions who buy AutoEDA for their teams", "Academy revenue is high-margin and funds itself through certification fees"] },
+      { name: "Enterprise Cloud (dedicated)", cat: "enterprise", desc: "Dedicated infrastructure for enterprise clients. Single-tenant deployment, SLA guarantees, dedicated support.", why: ["Large enterprises can't share infrastructure — compliance and security requirements", "Dedicated cloud justifies 10x pricing over shared SaaS", "Creates a new premium tier above team/business subscriptions"] },
+      { name: "Cross-organisation insights", cat: "ai", desc: "Anonymised benchmarking: how does your data quality compare to similar organisations?", why: ["Benchmarking creates value that a single organisation can't create alone", "A hospital knowing their data quality ranks in the top 20% of APRA-regulated entities is compelling", "Network effects: more users = better benchmarks = more valuable product"] },
+      { name: "Synthetic data generation", cat: "ai", desc: "Generate realistic synthetic datasets that preserve statistical properties of real data, for testing and sharing.", why: ["Privacy regulations prevent sharing real data — synthetic data is the workaround", "Data scientists need test datasets constantly — synthetic generation saves hours", "Opens a new market: organisations that need to share data without sharing data"] }
+    ]
+  },
+  {
+    year: 2033,
+    name: "Phase 8 — Category Definition",
+    sub: "AutoEDA becomes the operating system for data understanding.",
+    pills: ["$60M ARR", "500K users", "150+ team", "Category leader"],
+    color: "#534ab7",
+    features: [
+      { name: "AutoEDA OS — the data understanding layer", cat: "future", desc: "AutoEDA becomes embedded infrastructure in enterprise data stacks. Every dataset flowing through your org gets automatically profiled.", why: ["The platform play — AutoEDA isn't an app anymore, it's a layer in the data stack", "Like how Stripe became financial infrastructure, AutoEDA becomes data quality infrastructure", "Automatic profiling of every dataset creates a data health score for the entire organisation"] },
+      { name: "Vertical AI agents", cat: "future", desc: "Domain-specific autonomous agents: AutoEDA Health Agent, Finance Agent, Climate Agent — each expert in its vertical.", why: ["Agents that understand domain context outperform general-purpose tools dramatically", "A Health Agent that knows FHIR, HL7, and clinical trial standards is genuinely irreplaceable", "Vertical agents justify vertical pricing — each agent is a product in its own right"] },
+      { name: "Natural language to deployment pipeline", cat: "future", desc: "Describe what you want in plain English. AutoEDA builds the analysis, model, and report — and deploys it.", why: ["The logical end state of AutoEDA's vision: zero code required end-to-end", "From 'upload CSV, get charts' to 'describe your business question, get a deployed solution'", "This is the product that can justify a $1B valuation"] },
+      { name: "AutoEDA for Research Networks", cat: "future", desc: "Multi-institution federated analysis. Universities share insights without sharing raw data.", why: ["Federated learning is the privacy-preserving future of collaborative research", "Research consortia have huge budgets and long procurement cycles — sticky revenue", "RMIT partnership is the natural first customer for this feature"] },
+      { name: "Predictive data quality", cat: "future", desc: "AutoEDA predicts where data quality problems will emerge before they happen, based on pipeline patterns.", why: ["Moving from reactive to predictive is the final frontier of data quality", "Preventing a missing value problem is worth more than detecting it after the fact", "Positions AutoEDA as a data observability platform competing with Datadog for data"] },
+      { name: "AutoEDA Foundation — open source core", cat: "future", desc: "Release the core AutoEDA engine as open source. Build a community of contributors around the free tier.", why: ["Open core is the most durable SaaS moat — the community maintains the base", "Open source generates trust, press, and developer adoption that money can't buy", "Foundation model: free forever for open source, paid for enterprise features"] }
+    ]
+  }
+];
+
+const catLabels = { core: "Core", ai: "AI", platform: "Platform", enterprise: "Enterprise", future: "Vision" };
+let phase = 0;
+let selected = null;
+
+function render() {
+  const p = phases[phase];
+
+  // Nav
+  document.getElementById('topnav').innerHTML = phases.map((ph, i) =>
+    `<button class="nav-btn ${i === phase ? 'on' : ''}" onclick="go(${i})">${ph.year}</button>`
+  ).join('');
+
+  // Progress
+  document.getElementById('prog-yr').textContent = p.year;
+  document.getElementById('prog-fill').style.width = ((phase + 1) / phases.length * 100) + '%';
+
+  // Phase bar
+  document.getElementById('phase-bar').innerHTML = `
+    <div class="phase-bar-inner">
+      <div>
+        <div class="yr">${p.year}</div>
+        <div class="phase-name">${p.name}</div>
+        <div class="phase-label">${p.sub}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        ${p.pills.map(pl => `<span class="metric-pill" style="font-size:11px;padding:3px 10px;border-radius:20px;">${pl}</span>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // Features grid
+  document.getElementById('grid').innerHTML = p.features.map((f, i) => `
+    <div class="card ${selected === i ? 'selected' : ''}" onclick="select(${i})">
+      <div class="card-top">
+        <div class="card-name">${f.name}</div>
+        <span class="tag ${f.cat}">${catLabels[f.cat]}</span>
+      </div>
+      <div class="card-desc" style="color:${selected === i ? 'inherit' : ''}">${f.desc}</div>
+    </div>
+  `).join('');
+
+  renderDetail();
+}
+
+function renderDetail() {
+  const p = phases[phase];
+  const detail = document.getElementById('detail');
+  if (selected === null || selected >= p.features.length) {
+    detail.innerHTML = '<div class="placeholder">← Click a feature card to see the full rationale</div>';
+    return;
+  }
+  const f = p.features[selected];
+  detail.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+      <div class="detail-name">${f.name}</div>
+      <span class="tag ${f.cat}">${catLabels[f.cat]}</span>
+    </div>
+    <div class="detail-desc">${f.desc}</div>
+    <div class="why-box">
+      <div class="why-title">Why this feature, why now</div>
+      <div class="why-items">
+        ${f.why.map(w => `<div class="why-item"><div class="why-dot"></div><span>${w}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function select(i) {
+  selected = selected === i ? null : i;
+  render();
+}
+
+function go(i) {
+  phase = i;
+  selected = null;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

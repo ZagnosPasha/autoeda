@@ -439,10 +439,8 @@ with st.sidebar:
                 st.rerun()
 
 # ── Three-column layout: rail | chat | panel ───────────────────────────────
-rail_col, chat_col, panel_col = st.columns(
-    [0.04, 0.96 if not st.session_state.panel_open else 0.62,
-     0 if not st.session_state.panel_open else 0.34]
-)
+# Always render all 3 columns — hide panel content via conditional, never width=0
+rail_col, chat_col, panel_col = st.columns([0.04, 0.62, 0.34])
 
 # ════════════════════════════════════════════════════
 # LEFT ICON RAIL
@@ -558,8 +556,8 @@ with chat_col:
 # ════════════════════════════════════════════════════
 # RIGHT PANEL
 # ════════════════════════════════════════════════════
-if st.session_state.panel_open:
-    with panel_col:
+with panel_col:
+    if st.session_state.panel_open:
         view = st.session_state.panel_view
 
         # Panel header

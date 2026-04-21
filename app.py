@@ -39,26 +39,31 @@ st.markdown("""
       width: 0 !important; height: 0 !important;
       overflow: hidden !important;
   }
-  /* Sidebar rail buttons */
-  [data-testid="stSidebar"] button {
-      width: 36px !important; height: 36px !important;
-      border-radius: 10px !important;
+  /* Rail column buttons */
+  [data-testid="stSidebar"] button,
+  div[data-testid="column"]:first-child button {
       background: transparent !important;
       border: 1px solid transparent !important;
+      border-radius: 8px !important;
       color: #6b7280 !important;
-      font-size: 16px !important;
-      padding: 0 !important;
-      margin: 0 auto !important;
-      display: flex !important; align-items: center !important; justify-content: center !important;
+      font-size: 15px !important;
+      padding: 6px 0 !important;
+      width: 100% !important;
+      min-height: 36px !important;
   }
-  [data-testid="stSidebar"] button:hover {
+  div[data-testid="column"]:first-child button:hover {
       background: #f3f4f6 !important;
       border-color: #e5e3de !important;
       color: #374151 !important;
   }
-  [data-testid="stSidebar"] button p {
+  div[data-testid="column"]:first-child button:disabled {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+  }
+  div[data-testid="column"]:first-child button p,
+  div[data-testid="column"]:first-child button span {
       color: inherit !important;
-      font-size: 16px !important;
+      font-size: 15px !important;
   }
 
   /* ── Global uploader: hide native chrome everywhere (we use custom HTML) ── */
@@ -412,6 +417,7 @@ for k, v in [
     ("panel_open",         False),
     ("heatmap_cols",       None),
     ("show_missing_chart", True),
+    ("show_upload_widget", False),
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
@@ -590,18 +596,53 @@ rail_col, chat_col, panel_col = st.columns([0.04, _chat_w, 0.38 if st.session_st
 # LEFT ICON RAIL
 # ════════════════════════════════════════════════════
 with rail_col:
-    # Logo
+    # ── Logo ──────────────────────────────────────
     st.markdown(
-        '<div style="display:flex;flex-direction:column;align-items:center;padding:12px 0 4px;">'
-        '<div style="font-size:16px;font-weight:800;color:#6366f1;margin-bottom:10px;">✦</div>'
+        '<div style="text-align:center;padding:10px 0 8px;">'
+        '<span style="font-size:15px;font-weight:800;color:#6366f1;">✦</span>'
         '</div>',
         unsafe_allow_html=True
     )
-    # Panel toggle buttons — Stats / Charts / Data
+
+    # ── New file upload (+ button) ─────────────────
+    # Hidden uploader — the button below triggers it via a flag
+    if st.session_state.get("show_upload_widget"):
+        _new = st.file_uploader("n", type=["csv","xlsx"],
+                                label_visibility="collapsed", key="rail_new")
+        if _new:
+            fkey2 = _new.name + str(_new.size)
+            if fkey2 != st.session_state.get("file_key"):
+                with st.spinner("Loading…"):
+                    _df2 = load_data(_new)
+                if _df2 is not None:
+                    _s2  = get_summary(_df2)
+                    _mr2 = get_missing_report(_df2)
+                    _cs2 = get_column_stats(_df2)
+                    with st.spinner("Analysing…"):
+                        _raw2 = generate_narrative(_s2, _mr2, _cs2)
+                    st.session_state.update({
+                        "df": _df2, "summary": _s2, "missing_report": _mr2,
+                        "col_stats": _cs2, "filename": _new.name,
+                        "file_key": fkey2,
+                        "chat_history": [{"role":"ai","content":md_to_html(_raw2)}],
+                        "llm_history":  [{"role":"assistant","content":_raw2}],
+                        "panel_open": True, "panel_view": "stats",
+                        "show_missing_chart": True, "suggestion_used": None,
+                        "show_upload_widget": False,
+                    })
+                    st.rerun()
+
+    if st.button("＋", key="rail_newfile", help="Upload new file",
+                 use_container_width=True):
+        st.session_state.show_upload_widget = not st.session_state.get("show_upload_widget", False)
+        st.rerun()
+
+    st.markdown('<div style="height:4px;border-top:1px solid #f0ede8;margin:6px 4px;"></div>',
+                unsafe_allow_html=True)
+
+    # ── Panel toggle buttons — Stats / Charts / Data ─
     for _icon, _view in [("📊", "stats"), ("📈", "charts"), ("🗂", "data")]:
         _active = st.session_state.panel_open and st.session_state.panel_view == _view
-        _style = ("background:#eef2ff;border:1px solid #c7d2fe;" if _active
-                  else "background:transparent;border:1px solid transparent;")
         if st.button(_icon, key=f"rail_{_view}", help=_view.capitalize(),
                      use_container_width=True):
             if _active:
@@ -610,6 +651,15 @@ with rail_col:
                 st.session_state.panel_open = True
                 st.session_state.panel_view = _view
             st.rerun()
+
+    # ── Spacer then future nav items ──────────────
+    st.markdown('<div style="flex:1;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+
+    # Future placeholders — greyed out with tooltip
+    for _icon, _tip in [("🧩", "Templates (coming soon)"), ("🤖", "Agents (coming soon)")]:
+        st.button(_icon, key=f"rail_future_{_tip[:4]}", help=_tip,
+                  use_container_width=True, disabled=True)
 
 
 # ════════════════════════════════════════════════════

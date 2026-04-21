@@ -709,6 +709,85 @@ with chat_col:
         ]
         st.rerun()
 
+    # ── Template Q&A flow — shows column pickers in chat ───────────────────
+    if (st.session_state.get("tmpl_active") and
+            not st.session_state.get("tmpl_ready")):
+        tmpl  = TEMPLATES[st.session_state.tmpl_active]
+        q_idx = st.session_state.tmpl_q_idx
+        qs    = tmpl["questions"]
+
+        if q_idx < len(qs):
+            q       = qs[q_idx]
+            f_type  = q.get("filter", "any")
+            col_map = st.session_state.tmpl_col_map
+
+            # Build column options based on filter type
+            if f_type == "numeric":
+                opts = [c for c, s in col_stats.items() if s.get("type") == "numeric"]
+            elif f_type == "text":
+                opts = [c for c, s in col_stats.items() if s.get("type") == "text"]
+            else:
+                opts = list(df.columns)
+
+            st.markdown(
+                f'<div style="background:#f0f4ff;border:1px solid #c7d2fe;'
+                f'border-radius:12px;padding:14px 18px;margin:8px 0;">'
+                f'<div style="font-size:11px;color:#6366f1;font-weight:700;'
+                f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">'
+                f'🧩 {tmpl["name"]} — step {q_idx+1} of {len(qs)}</div>'
+                f'<div style="font-size:13px;color:#1e293b;margin-bottom:10px;">'
+                f'{q["message"]}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+            pick_cols = st.columns([3, 1]) if q.get("optional") else st.columns([4, 1])
+            with pick_cols[0]:
+                chosen = st.selectbox(
+                    "col", opts, key=f"tmpl_sel_{q_idx}",
+                    label_visibility="collapsed"
+                )
+            confirmed = False
+            skipped   = False
+            with pick_cols[1]:
+                if q.get("optional"):
+                    if st.button("Skip", key=f"tmpl_skip_{q_idx}",
+                                 use_container_width=True):
+                        skipped = True
+                if st.button("✓ Confirm", key=f"tmpl_confirm_{q_idx}",
+                             use_container_width=True, type="primary"):
+                    confirmed = True
+
+            if confirmed or skipped:
+                if confirmed:
+                    col_map[q["key"]] = chosen
+                st.session_state.tmpl_col_map = col_map
+                next_idx = q_idx + 1
+                st.session_state.tmpl_q_idx = next_idx
+
+                if next_idx >= len(qs):
+                    # All questions answered — mark ready
+                    st.session_state.tmpl_ready = True
+                    st.session_state.panel_open = True
+                    st.session_state.panel_view = "template"
+                    tname = tmpl["name"]
+                    st.session_state.chat_history.append({
+                        "role": "ai",
+                        "content": (
+                            f"<p>Your <strong>{tname}</strong> is ready. "
+                            f"Check the 🧩 Dash panel on the right to see it. "
+                            f"You can still ask me questions while the dashboard is open.</p>"
+                        )
+                    })
+                else:
+                    # Seed next question into chat
+                    next_q = qs[next_idx]
+                    st.session_state.chat_history.append({
+                        "role": "ai",
+                        "content": f"<p>{next_q['message']}</p>"
+                    })
+                st.rerun()
+
     # Chat input
     st.markdown('<div style="padding-top:12px;"></div>', unsafe_allow_html=True)
     user_input = st.chat_input("Ask anything about your data…")

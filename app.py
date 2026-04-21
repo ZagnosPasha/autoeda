@@ -713,16 +713,40 @@ with chat_col:
     st.markdown('<div style="padding-top:12px;"></div>', unsafe_allow_html=True)
     user_input = st.chat_input("Ask anything about your data…")
     if user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        with st.spinner("Thinking…"):
-            raw = answer_question(user_input, summary, col_stats, st.session_state.llm_history)
-        html = md_to_html(raw)
-        st.session_state.chat_history.append({"role": "ai", "content": html})
-        st.session_state.llm_history += [
-            {"role": "user", "content": user_input},
-            {"role": "assistant", "content": raw},
+        # ── Intercept dashboard/template requests ──────────────────────────
+        _dash_keywords = [
+            "dashboard", "template", "sales dashboard", "make a dashboard",
+            "create dashboard", "build dashboard", "show dashboard",
+            "make dashboard", "generate dashboard"
         ]
-        st.rerun()
+        _is_dash_request = any(kw in user_input.lower() for kw in _dash_keywords)
+
+        if _is_dash_request and not st.session_state.get("tmpl_active"):
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            st.session_state.chat_history.append({
+                "role": "ai",
+                "content": (
+                    "<p>I can build you a dashboard using the Templates feature. "
+                    "Click <strong>🧩 Dash</strong> in the right panel header (or the 🧩 icon "
+                    "in the left sidebar) to pick a template — I'll guide you through "
+                    "3 quick questions to map your columns, then render the dashboard here.</p>"
+                )
+            })
+            # Auto-open the template panel
+            st.session_state.panel_open = True
+            st.session_state.panel_view = "template"
+            st.rerun()
+        else:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            with st.spinner("Thinking…"):
+                raw = answer_question(user_input, summary, col_stats, st.session_state.llm_history)
+            html = md_to_html(raw)
+            st.session_state.chat_history.append({"role": "ai", "content": html})
+            st.session_state.llm_history += [
+                {"role": "user", "content": user_input},
+                {"role": "assistant", "content": raw},
+            ]
+            st.rerun()
 
 
 # ════════════════════════════════════════════════════

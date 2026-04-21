@@ -34,8 +34,10 @@ RULES:
 - Bold column names with **column_name**
 - Keep each bullet under 15 words
 
-For follow-up questions:
-- Answer in 2-4 bullets maximum
+When asked to build, create, or show a dashboard:
+- Do NOT attempt to build one or describe how to build one
+- Simply say: "Use the 🧩 Templates panel to build a dashboard — click the puzzle icon in the sidebar."
+- Keep it to one sentence, nothing more
 - Lead with the number/fact, then explain
 - Bold any column names referenced"""
 

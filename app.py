@@ -5,6 +5,7 @@ from analyser import load_data, get_summary, get_missing_report, get_column_stat
 from visualiser import (plot_histogram, plot_bar, plot_correlation,
                         plot_missing_inline, HEATMAP_COL_LIMIT)
 from narrator import generate_narrative, answer_question
+from templates import TEMPLATES
 
 st.set_page_config(page_title="Perceiv", page_icon="✦", layout="wide")
 
@@ -309,7 +310,7 @@ st.markdown("""
       margin-bottom: 6px;
   }
 
-  /* Suggestion chip buttons — white pill, indigo text, ALL states */
+  /* Suggestion chip buttons — white pill, black text, ALL states */
   [data-testid="stHorizontalBlock"] button[kind="secondary"],
   [data-testid="stHorizontalBlock"] button[kind="secondaryFormSubmit"],
   [data-testid="stHorizontalBlock"] button {
@@ -317,7 +318,7 @@ st.markdown("""
       background-color: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
       border-radius: 20px !important;
-      color: #4f46e5 !important;
+      color: #1a1a1a !important;
       font-size: 12px !important;
       font-weight: 500 !important;
       box-shadow: none !important;
@@ -325,13 +326,13 @@ st.markdown("""
   [data-testid="stHorizontalBlock"] button:hover {
       background: #f5f4f0 !important;
       background-color: #f5f4f0 !important;
-      border-color: #c7d2fe !important;
-      color: #4f46e5 !important;
+      border-color: #d1d5db !important;
+      color: #1a1a1a !important;
   }
   [data-testid="stHorizontalBlock"] button *,
   [data-testid="stHorizontalBlock"] button p,
   [data-testid="stHorizontalBlock"] button span {
-      color: #4f46e5 !important;
+      color: #1a1a1a !important;
   }
 
   /* Expanders in charts panel */
@@ -432,7 +433,11 @@ for k, v in [
     ("panel_open",         False),
     ("heatmap_cols",       None),
     ("show_missing_chart", True),
-    ("show_upload_widget", False),
+    ("show_upload_widget",  False),
+    ("tmpl_active",         None),   # e.g. "sales"
+    ("tmpl_col_map",        {}),     # mapped columns
+    ("tmpl_q_idx",          0),      # which question we're on
+    ("tmpl_ready",          False),  # Q&A complete, dashboard ready
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
@@ -586,8 +591,19 @@ with st.sidebar:
             st.rerun()
 
     # ── Future nav (disabled) ──────────────────────
-    st.button("🧩", key="rail_tmpl",   help="Templates (coming soon)", disabled=True, use_container_width=True)
-    st.button("🤖", key="rail_agents", help="Agents (coming soon)",    disabled=True, use_container_width=True)
+    # Templates — now active
+    _tmpl_active = (st.session_state.panel_open and
+                    st.session_state.panel_view == "template")
+    if st.button("🧩", key="rail_tmpl", help="Templates",
+                 use_container_width=True,
+                 type="primary" if _tmpl_active else "secondary"):
+        if _tmpl_active:
+            st.session_state.panel_open = False
+        else:
+            st.session_state.panel_open = True
+            st.session_state.panel_view = "template"
+        st.rerun()
+    st.button("🤖", key="rail_agents", help="Agents (coming soon)", disabled=True, use_container_width=True)
 
 # ── Two-column layout: chat | panel ────────────────────────────────────────
 _panel_w = 0.38 if st.session_state.panel_open else 0.01
@@ -722,7 +738,7 @@ with panel_col:
             '</div>',
             unsafe_allow_html=True
         )
-        ph1, ph2, ph3, ph4 = st.columns([1,1,1,0.5])
+        ph1, ph2, ph3, ph4, ph5 = st.columns([1,1,1,1,0.5])
         with ph1:
             if st.button("📊 Stats",   key="pv_stats",  use_container_width=True,
                          type="primary" if view=="stats" else "secondary"):
@@ -732,10 +748,14 @@ with panel_col:
                          type="primary" if view=="charts" else "secondary"):
                 st.session_state.panel_view = "charts"; st.rerun()
         with ph3:
-            if st.button("🗂️ Data",   key="pv_data",   use_container_width=True,
+            if st.button("🗂️ Data",    key="pv_data",   use_container_width=True,
                          type="primary" if view=="data" else "secondary"):
                 st.session_state.panel_view = "data"; st.rerun()
         with ph4:
+            if st.button("🧩 Dash",    key="pv_tmpl",   use_container_width=True,
+                         type="primary" if view=="template" else "secondary"):
+                st.session_state.panel_view = "template"; st.rerun()
+        with ph5:
             if st.button("✕", key="close_panel", use_container_width=True):
                 st.session_state.panel_open = False; st.rerun()
 

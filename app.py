@@ -45,15 +45,8 @@ st.markdown("""
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"],
   [data-testid="stSidebar"] [data-testid="stUploadedFileData"],
   [data-testid="stSidebar"] [data-testid="stFileUploader"] label,
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] small,
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] span:not(button span),
-  [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] small {
       display: none !important;
-  }
-  /* Ensure only the button itself is visible */
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] > div {
-      display: flex !important;
-      justify-content: center !important;
   }
   /* Style the upload button as a clean icon button */
   [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
@@ -344,13 +337,9 @@ st.markdown("""
       margin-bottom: 6px;
   }
 
-  /* Suggestion chip buttons — consistent pill style, all states */
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button:hover,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button:focus,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button:active {
+  /* Suggestion chip buttons — white pill, indigo text */
+  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
       background: #ffffff !important;
-      background-color: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
       border-radius: 20px !important;
       color: #4f46e5 !important;
@@ -359,13 +348,12 @@ st.markdown("""
       box-shadow: none !important;
   }
   [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button:hover {
-      background: #eef2ff !important;
-      background-color: #eef2ff !important;
-      border-color: #6366f1 !important;
+      background: #f5f4f0 !important;
+      border-color: #c7d2fe !important;
+      color: #4f46e5 !important;
   }
   [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button p,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button span,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button div {
+  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button span {
       color: #4f46e5 !important;
   }
 

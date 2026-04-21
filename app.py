@@ -167,14 +167,23 @@ st.markdown("""
       padding: 12px 10% 20px;
       background: #f5f4f0;
   }
-  [data-testid="stChatInput"] > div {
+  /* Chat input — force light background on all inner elements */
+  [data-testid="stChatInput"],
+  [data-testid="stChatInput"] > div,
+  [data-testid="stChatInput"] > div > div,
+  [data-testid="stChatInput"] > div > div > div {
       background: #ffffff !important;
-      border: 1.5px solid #e5e3de !important;
       border-radius: 16px !important;
+  }
+  [data-testid="stChatInput"] > div {
+      border: 1.5px solid #e5e3de !important;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
   }
   [data-testid="stChatInput"] textarea {
-      color: #1a1a1a !important; font-size: 14px !important;
+      background: #ffffff !important;
+      color: #1a1a1a !important;
+      font-size: 14px !important;
+      caret-color: #6366f1 !important;
   }
   [data-testid="stChatInput"] textarea::placeholder {
       color: #9ca3af !important;
@@ -349,13 +358,14 @@ def col_chip_html(col_name, col_stats, dt_names, missing_report):
 # SESSION STATE
 # ══════════════════════════════════════════════════════════════════════════════
 for k, v in [
-    ("chat_history",     []),
-    ("llm_history",      []),
-    ("data_loaded",      False),
-    ("suggestion_used",  None),
-    ("panel_view",       "stats"),   # "stats" | "charts" | "data" | None
-    ("panel_open",       False),
-    ("heatmap_cols",     None),
+    ("chat_history",       []),
+    ("llm_history",        []),
+    ("data_loaded",        False),
+    ("suggestion_used",    None),
+    ("panel_view",         "stats"),
+    ("panel_open",         False),
+    ("heatmap_cols",       None),
+    ("show_missing_chart", True),
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
@@ -460,33 +470,21 @@ with st.sidebar:
 
 # ── Three-column layout: rail | chat | panel ───────────────────────────────
 # Always render all 3 columns — hide panel content via conditional, never width=0
-rail_col, chat_col, panel_col = st.columns([0.04, 0.62, 0.34])
+# Wider chat when panel closed, narrower when open
+_chat_w = 0.58 if st.session_state.panel_open else 0.92
+rail_col, chat_col, panel_col = st.columns([0.04, _chat_w, 0.38 if st.session_state.panel_open else 0.04])
 
 # ════════════════════════════════════════════════════
 # LEFT ICON RAIL
 # ════════════════════════════════════════════════════
 with rail_col:
-    st.markdown('<div style="display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px;">', unsafe_allow_html=True)
-    st.markdown('<div style="font-size:16px;font-weight:800;color:#6366f1;margin-bottom:14px;">✦</div>', unsafe_allow_html=True)
-
-    def rail_button(icon, label, view_key):
-        is_active = (st.session_state.panel_open and
-                     st.session_state.panel_view == view_key)
-        cls = "rail-btn active" if is_active else "rail-btn"
-        if st.button(icon, key=f"rail_{view_key}", help=label,
-                     use_container_width=False):
-            if is_active:
-                st.session_state.panel_open = False
-            else:
-                st.session_state.panel_open = True
-                st.session_state.panel_view = view_key
-            st.rerun()
-
-    rail_button("📊", "Stats", "stats")
-    rail_button("📈", "Charts", "charts")
-    rail_button("🗂️", "Data", "data")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="display:flex;flex-direction:column;align-items:center;'
+        'padding:12px 0 0;gap:8px;">'
+        '<div style="font-size:17px;font-weight:800;color:#6366f1;margin-bottom:8px;">✦</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
 
 # ════════════════════════════════════════════════════
@@ -495,24 +493,25 @@ with rail_col:
 with chat_col:
     # File name header
     st.markdown(
-        f'<div style="padding:12px 10% 0;font-size:12px;color:#9ca3af;font-weight:500;">'
+        f'<div style="padding:14px 0 0 16px;font-size:12px;color:#9ca3af;font-weight:500;">'
         f'✦ Perceiv &nbsp;·&nbsp; <span style="color:#6366f1;">{st.session_state.filename}</span></div>',
         unsafe_allow_html=True
     )
 
-    # Messages
+    # Messages — rendered in a centered max-width container via CSS
     for msg in st.session_state.chat_history:
         render_bubble(msg["role"], msg["content"])
 
-    # Inline missing chart — only after first message
-    if len(st.session_state.chat_history) == 1:
+    # Inline missing chart — always show when there are missing values (not just msg==1)
+    if st.session_state.get("show_missing_chart", True):
         missing_fig = plot_missing_inline(missing_report)
         if missing_fig:
-            _, mc, _ = st.columns([0.1, 0.7, 0.2])
+            _, mc, _ = st.columns([0.05, 0.85, 0.1])
             with mc:
                 st.pyplot(missing_fig, use_container_width=True)
+            st.session_state.show_missing_chart = False
 
-    # Suggestion chips — only after first message
+    # Suggestion chips — only on first message
     if len(st.session_state.chat_history) == 1:
         st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
         num_cols = [c for c, s in col_stats.items() if s.get("type") == "numeric"]
@@ -580,15 +579,28 @@ with panel_col:
     if st.session_state.panel_open:
         view = st.session_state.panel_view
 
-        # Panel header
-        labels = {"stats": "Dataset Stats", "charts": "Charts", "data": "Data"}
-        header_label = labels.get(view, "Panel")
+        # Panel header with view toggle buttons
         st.markdown(
-            f'<div class="panel-header">'
-            f'<span>{header_label}</span>'
-            f'</div>',
+            '<div style="padding:10px 8px 8px;border-bottom:1px solid #f0ede8;">'
+            '</div>',
             unsafe_allow_html=True
         )
+        ph1, ph2, ph3, ph4 = st.columns([1,1,1,0.5])
+        with ph1:
+            if st.button("📊 Stats",   key="pv_stats",  use_container_width=True,
+                         type="primary" if view=="stats" else "secondary"):
+                st.session_state.panel_view = "stats"; st.rerun()
+        with ph2:
+            if st.button("📈 Charts",  key="pv_charts", use_container_width=True,
+                         type="primary" if view=="charts" else "secondary"):
+                st.session_state.panel_view = "charts"; st.rerun()
+        with ph3:
+            if st.button("🗂️ Data",   key="pv_data",   use_container_width=True,
+                         type="primary" if view=="data" else "secondary"):
+                st.session_state.panel_view = "data"; st.rerun()
+        with ph4:
+            if st.button("✕", key="close_panel", use_container_width=True):
+                st.session_state.panel_open = False; st.rerun()
 
         # ── STATS VIEW ────────────────────────────────
         if view == "stats":
@@ -632,36 +644,51 @@ with panel_col:
                         if c not in dt_names]
             txt_cols_list = list(df.select_dtypes(include="object").columns)
 
-            if true_num:
-                st.markdown("**Numeric distributions**")
-                for col in true_num:
-                    with st.expander(col, expanded=False):
-                        fig = plot_histogram(df, col)
-                        if fig:
-                            st.pyplot(fig, use_container_width=True)
+            chart_type = st.selectbox(
+                "Chart type",
+                ["Distributions (numeric)", "Categorical", "Correlation heatmap"],
+                key="chart_type_sel",
+                label_visibility="collapsed"
+            )
 
-            if txt_cols_list:
-                st.markdown("**Categorical**")
-                for col in txt_cols_list:
-                    with st.expander(col, expanded=False):
-                        st.pyplot(plot_bar(df, col), use_container_width=True)
-
-            if len(true_num) >= 2:
-                st.markdown("**Correlation heatmap**")
-                total_num = len(true_num)
-                if total_num > HEATMAP_COL_LIMIT:
-                    st.caption(f"{total_num} numeric columns — select up to 15:")
-                    selected = st.multiselect(
-                        "Columns", options=true_num,
-                        default=true_num[:HEATMAP_COL_LIMIT],
-                        key="heatmap_sel", label_visibility="collapsed"
-                    )
-                    if len(selected) >= 2:
-                        fig, _, _ = plot_correlation(df[selected], selected_cols=selected)
-                        st.pyplot(fig, use_container_width=True)
+            if chart_type == "Distributions (numeric)":
+                if not true_num:
+                    st.caption("No numeric columns found.")
                 else:
-                    fig, _, _ = plot_correlation(df[true_num])
-                    st.pyplot(fig, use_container_width=True)
+                    col_sel = st.selectbox("Column", true_num, key="hist_col_sel",
+                                           label_visibility="collapsed")
+                    fig = plot_histogram(df, col_sel)
+                    if fig:
+                        st.pyplot(fig, use_container_width=True)
+
+            elif chart_type == "Categorical":
+                if not txt_cols_list:
+                    st.caption("No categorical columns found.")
+                else:
+                    col_sel = st.selectbox("Column", txt_cols_list, key="bar_col_sel",
+                                           label_visibility="collapsed")
+                    st.pyplot(plot_bar(df, col_sel), use_container_width=True)
+
+            elif chart_type == "Correlation heatmap":
+                if len(true_num) < 2:
+                    st.caption("Need at least 2 numeric columns.")
+                else:
+                    total_num = len(true_num)
+                    if total_num > HEATMAP_COL_LIMIT:
+                        st.caption(f"{total_num} numeric cols — select up to 15:")
+                        selected = st.multiselect(
+                            "Columns", options=true_num,
+                            default=true_num[:HEATMAP_COL_LIMIT],
+                            key="heatmap_sel", label_visibility="collapsed"
+                        )
+                        if len(selected) >= 2:
+                            fig, _, _ = plot_correlation(df[selected], selected_cols=selected)
+                            st.pyplot(fig, use_container_width=True)
+                        else:
+                            st.caption("Select at least 2 columns.")
+                    else:
+                        fig, _, _ = plot_correlation(df[true_num])
+                        st.pyplot(fig, use_container_width=True)
 
         # ── DATA VIEW ─────────────────────────────────
         elif view == "data":

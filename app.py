@@ -427,67 +427,52 @@ if not st.session_state.data_loaded:
       .block-container { padding: 0 !important; }
       .stApp { background: #f5f4f0 !important; }
 
-      /* Force the entire uploader and all children to light theme */
-      [data-testid="stFileUploader"],
-      [data-testid="stFileUploader"] > div,
-      [data-testid="stFileUploader"] > div > div,
-      [data-testid="stFileUploadDropzone"],
-      [data-testid="stFileUploadDropzone"] > div,
-      [data-testid="stFileUploadDropzone"] > div > div,
-      section[data-testid="stFileUploadDropzone"] {
+      /* Uploader — override dark theme at root color variable level */
+      :root, .stApp, [data-testid="stAppViewContainer"] {
+          --background-color: #f5f4f0 !important;
+      }
+      /* Dropzone box */
+      [data-testid="stFileUploadDropzone"] {
           background: #ffffff !important;
           background-color: #ffffff !important;
-      }
-      [data-testid="stFileUploadDropzone"] {
           border: 2px dashed #c7d2fe !important;
           border-radius: 16px !important;
           padding: 40px 32px !important;
-          text-align: center !important;
-          cursor: pointer !important;
           min-height: 180px !important;
       }
       [data-testid="stFileUploadDropzone"]:hover {
           border-color: #6366f1 !important;
-          background: #fafaff !important;
-          background-color: #fafaff !important;
       }
-      /* All text inside dropzone */
-      [data-testid="stFileUploadDropzone"] *,
-      [data-testid="stFileUploaderDropzoneInstructions"] *,
-      [data-testid="stFileUploaderDropzoneInstructions"] span,
-      [data-testid="stFileUploaderDropzoneInstructions"] p,
-      [data-testid="stFileUploaderDropzoneInstructions"] small {
+      /* Every element inside the dropzone forced light */
+      [data-testid="stFileUploadDropzone"],
+      [data-testid="stFileUploadDropzone"] > *,
+      [data-testid="stFileUploadDropzone"] > * > *,
+      [data-testid="stFileUploadDropzone"] > * > * > * {
+          background: #ffffff !important;
+          background-color: #ffffff !important;
           color: #374151 !important;
       }
-      [data-testid="stFileUploaderDropzoneInstructions"] span:first-child {
-          font-size: 15px !important;
-          font-weight: 600 !important;
-          color: #1a1a1a !important;
+      /* Instruction text sizes */
+      [data-testid="stFileUploaderDropzoneInstructions"] > div > span {
+          font-size: 15px !important; font-weight: 600 !important;
+          color: #111827 !important;
       }
-      [data-testid="stFileUploaderDropzoneInstructions"] small {
-          color: #9ca3af !important;
-          font-size: 13px !important;
+      [data-testid="stFileUploaderDropzoneInstructions"] > div > small {
+          color: #9ca3af !important; font-size: 13px !important;
       }
-      /* Upload button */
+      /* Upload button — indigo */
       [data-testid="stFileUploadDropzone"] button {
           background: #6366f1 !important;
           background-color: #6366f1 !important;
           color: #ffffff !important;
           border: none !important;
           border-radius: 10px !important;
-          padding: 8px 20px !important;
-          font-size: 13px !important;
-          font-weight: 600 !important;
       }
+      [data-testid="stFileUploadDropzone"] button * { color: #ffffff !important; }
       [data-testid="stFileUploadDropzone"] button:hover {
           background: #4f46e5 !important;
-          background-color: #4f46e5 !important;
       }
-      [data-testid="stFileUploadDropzone"] button span,
-      [data-testid="stFileUploadDropzone"] button p {
-          color: #ffffff !important;
-      }
-      /* Hide selected-file row and label */
+      /* Hide selected file row & label */
       [data-testid="stUploadedFileData"] { display: none !important; }
       [data-testid="stFileUploader"] label { display: none !important; }
     </style>
@@ -642,14 +627,7 @@ with chat_col:
     for msg in st.session_state.chat_history:
         render_bubble(msg["role"], msg["content"])
 
-    # Inline missing chart — always show when there are missing values (not just msg==1)
-    if st.session_state.get("show_missing_chart", True):
-        missing_fig = plot_missing_inline(missing_report)
-        if missing_fig:
-            _, mc, _ = st.columns([0.05, 0.85, 0.1])
-            with mc:
-                st.pyplot(missing_fig, use_container_width=True)
-            st.session_state.show_missing_chart = False
+    # Missing chart moved to Charts panel
 
     # Suggestion chips — only on first message
     if len(st.session_state.chat_history) == 1:
@@ -786,7 +764,7 @@ with panel_col:
 
             chart_type = st.selectbox(
                 "Chart type",
-                ["Distributions (numeric)", "Categorical", "Correlation heatmap"],
+                ["Distributions (numeric)", "Categorical", "Correlation heatmap", "Missing values"],
                 key="chart_type_sel",
                 label_visibility="collapsed"
             )
@@ -829,6 +807,13 @@ with panel_col:
                     else:
                         fig, _, _ = plot_correlation(df[true_num])
                         st.pyplot(fig, use_container_width=True)
+
+            elif chart_type == "Missing values":
+                missing_fig = plot_missing_inline(missing_report)
+                if missing_fig:
+                    st.pyplot(missing_fig, use_container_width=True)
+                else:
+                    st.success("✓ No missing values in this dataset.")
 
         # ── DATA VIEW ─────────────────────────────────
         elif view == "data":

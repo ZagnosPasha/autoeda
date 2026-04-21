@@ -96,9 +96,9 @@ def plot_correlation(df, selected_cols=None):
 
 
 def plot_missing_inline(missing_report):
-    """Compact horizontal bar — only columns with missing values."""
+    """Compact horizontal bar — only columns with actual missing values (pct > 0)."""
     missing_only = sorted(
-        [r for r in missing_report if r["missing"] > 0],
+        [r for r in missing_report if r["pct"] > 0],  # strictly > 0, not just missing > 0
         key=lambda r: r["pct"], reverse=True
     )
     if not missing_only:
@@ -109,22 +109,23 @@ def plot_missing_inline(missing_report):
     colors = ["#ef4444" if p >= 10 else "#f59e0b" for p in pcts]
 
     n = len(cols)
-    h = max(2.0, n * 0.38)
+    h = max(1.8, n * 0.42)
     fig, ax = plt.subplots(figsize=(6, h))
 
     bars = ax.barh(range(n), pcts, color=colors,
                    edgecolor=_BG, linewidth=0.3, alpha=0.9)
     ax.set_yticks(range(n))
     ax.set_yticklabels(
-        [c[:28] + "…" if len(c) > 28 else c for c in cols],
+        [c[:26] + "…" if len(c) > 26 else c for c in cols],
         fontsize=9, color=_FG
     )
     ax.set_xlabel("Missing %", fontsize=9)
-    ax.set_title("Missing values by column", fontsize=11, pad=8, fontweight="600")
-    ax.set_xlim(0, max(pcts) * 1.18)
+    ax.set_title(f"Missing values — {n} column{'s' if n>1 else ''}",
+                 fontsize=11, pad=8, fontweight="600")
+    ax.set_xlim(0, max(pcts) * 1.22)
 
     for i, (bar, pct) in enumerate(zip(bars, pcts)):
-        ax.text(pct + 0.4, i, f"{pct}%", va="center", fontsize=8, color=_FG)
+        ax.text(pct + 0.3, i, f"{pct}%", va="center", fontsize=8, color=_FG)
 
     _apply_light(fig, ax)
     ax.grid(axis="x", color=_GRID, linewidth=0.5, linestyle="--", alpha=0.7)

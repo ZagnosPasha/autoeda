@@ -941,3 +941,78 @@ with panel_col:
                     return ""
                 st.dataframe(monly.style.map(cflag, subset=["flag"]),
                              use_container_width=True, hide_index=True)
+
+        # ── TEMPLATE / DASHBOARD VIEW ──────────────────
+        elif view == "template":
+            tmpl_id = st.session_state.get("tmpl_active")
+
+            if not tmpl_id:
+                # Template picker
+                st.markdown(
+                    '<div style="font-size:11px;font-weight:700;color:#9ca3af;'
+                    'text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;">Templates</div>',
+                    unsafe_allow_html=True
+                )
+                for tid, tmpl in TEMPLATES.items():
+                    st.markdown(
+                        f'<div style="background:#f9f8f6;border:1px solid #e5e3de;'
+                        f'border-radius:10px;padding:10px 12px;margin-bottom:6px;">'
+                        f'<div style="font-size:13px;font-weight:600;color:#111827;">'
+                        f'{tmpl["icon"]} {tmpl["name"]}</div>'
+                        f'<div style="font-size:11px;color:#9ca3af;margin-top:2px;">'
+                        f'{tmpl["desc"]}</div></div>',
+                        unsafe_allow_html=True
+                    )
+                    if st.button(f"Use {tmpl['name']} →", key=f"use_tmpl_{tid}",
+                                 use_container_width=True, type="primary"):
+                        st.session_state.tmpl_active  = tid
+                        st.session_state.tmpl_col_map = {}
+                        st.session_state.tmpl_q_idx   = 0
+                        st.session_state.tmpl_ready   = False
+                        first_q = TEMPLATES[tid]["questions"][0]
+                        n_qs = len(TEMPLATES[tid]["questions"])
+                        tname = tmpl["name"]
+                        fq_msg = first_q["message"]
+                        st.session_state.chat_history.append({
+                            "role": "ai",
+                            "content": (
+                                f"<p>Let's set up your <strong>{tname}</strong>. "
+                                f"I'll ask {n_qs} quick questions to map your columns.</p>"
+                                f"<p>{fq_msg}</p>"
+                            )
+                        })
+                        st.rerun()
+
+            elif not st.session_state.get("tmpl_ready"):
+                tmpl = TEMPLATES[tmpl_id]
+                q_idx = st.session_state.tmpl_q_idx
+                total = len(tmpl["questions"])
+                st.markdown(
+                    f'<div style="font-size:12px;color:#6366f1;font-weight:600;">'
+                    f'{tmpl["icon"]} {tmpl["name"]}</div>'
+                    f'<div style="font-size:11px;color:#9ca3af;margin-top:2px;">'
+                    f'Step {q_idx}/{total} — answer questions in the chat.</div>',
+                    unsafe_allow_html=True
+                )
+                if st.button("Cancel setup", key="cancel_tmpl"):
+                    st.session_state.tmpl_active = None
+                    st.rerun()
+
+            else:
+                # Dashboard ready — render it
+                tmpl = TEMPLATES[tmpl_id]
+                hc, rc = st.columns([3, 1])
+                with hc:
+                    st.markdown(
+                        f'<div style="font-size:12px;font-weight:700;color:#111827;">'
+                        f'{tmpl["icon"]} {tmpl["name"]}</div>',
+                        unsafe_allow_html=True
+                    )
+                with rc:
+                    if st.button("Reset", key="reset_tmpl"):
+                        st.session_state.tmpl_active  = None
+                        st.session_state.tmpl_col_map = {}
+                        st.session_state.tmpl_q_idx   = 0
+                        st.session_state.tmpl_ready   = False
+                        st.rerun()
+                tmpl["render"](df, st.session_state.tmpl_col_map)

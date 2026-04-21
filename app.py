@@ -765,61 +765,53 @@ with panel_col:
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown('<div class="col-section-label">Columns — click to expand</div>', unsafe_allow_html=True)
+            st.markdown('<div class="col-section-label">Columns</div>', unsafe_allow_html=True)
+            rows_html = ""
             for col in df.columns:
-                chip = col_chip_html(col, col_stats, dt_names, missing_report)
                 s = col_stats.get(col, {})
                 col_type = s.get("type", "other")
-                with st.expander(col, expanded=False):
-                    st.markdown(chip, unsafe_allow_html=True)
-                    if col_type == "numeric":
-                        r = s.get("min","?")
-                        rx = s.get("max","?")
-                        st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px;margin-top:4px;">
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Mean</div>
-    <div style="font-weight:600;color:#111827;">{s.get("mean","?")}</div>
-  </div>
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Median</div>
-    <div style="font-weight:600;color:#111827;">{s.get("median","?")}</div>
-  </div>
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Std dev</div>
-    <div style="font-weight:600;color:#111827;">{s.get("std","?")}</div>
-  </div>
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Range</div>
-    <div style="font-weight:600;color:#111827;">{r} to {rx}</div>
-  </div>
-</div>
-<div style="font-size:11px;color:#6366f1;margin-top:4px;">{s.get("skew","")}</div>
-                        """, unsafe_allow_html=True)
-                    elif col_type == "text":
-                        mc = str(s.get("most_common","?"))[:24]
-                        tp = s.get("top_pct","?")
-                        uv = s.get("unique_values","?")
-                        st.markdown(f"""
-<div style="font-size:12px;display:flex;flex-direction:column;gap:4px;margin-top:4px;">
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <span style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Unique </span>
-    <span style="font-weight:600;color:#111827;">{uv}</span>
-  </div>
-  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
-    <span style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Top </span>
-    <span style="font-weight:600;color:#111827;">{mc}</span>
-    <span style="color:#9ca3af;"> ({tp}%)</span>
-  </div>
-</div>
-                        """, unsafe_allow_html=True)
-                    elif col_type == "datetime":
-                        st.markdown(f"""
-<div style="font-size:12px;background:#f9f8f6;border-radius:6px;padding:5px 8px;margin-top:4px;">
-  <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Range</div>
-  <div style="font-weight:600;color:#111827;">{s.get("min","?")} to {s.get("max","?")}</div>
-</div>
-                        """, unsafe_allow_html=True)
+                miss_r = next((r for r in missing_report if r["column"] == col), {})
+                miss_pct = miss_r.get("pct", 0)
+                if col_type == "numeric":
+                    row_bg = "#f0f4ff"
+                    badge = '<span style="background:#eef2ff;color:#4f46e5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">NUM</span>'
+                    detail = f'mean {s.get("mean","?")} &nbsp; med {s.get("median","?")}'
+                elif col_type == "text":
+                    row_bg = "#f0fdf4"
+                    badge = '<span style="background:#dcfce7;color:#15803d;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">TEXT</span>'
+                    mc = str(s.get("most_common","?"))[:14]
+                    detail = f'{s.get("unique_values","?")} uniq &nbsp; {mc}'
+                elif col_type == "datetime":
+                    row_bg = "#fffbeb"
+                    badge = '<span style="background:#fef9c3;color:#b45309;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">DATE</span>'
+                    detail = f'{s.get("min","?")} to {s.get("max","?")}'
+                else:
+                    row_bg = "#f9f8f6"
+                    badge = ""
+                    detail = ""
+                miss_html = ""
+                if miss_pct >= 10:
+                    miss_html = f'&nbsp;<span style="background:#fee2e2;color:#b91c1c;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
+                elif miss_pct > 0:
+                    miss_html = f'&nbsp;<span style="background:#fef3c7;color:#b45309;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
+                col_display = col if len(col) <= 16 else col[:15] + "..."
+                rows_html += (
+                    f'<tr style="background:{row_bg};border-bottom:1px solid #f0ede8;">' +
+                    f'<td style="padding:5px 8px;font-size:11px;font-weight:600;color:#111827;white-space:nowrap;">{col_display}{miss_html}</td>' +
+                    f'<td style="padding:5px 4px;">{badge}</td>' +
+                    f'<td style="padding:5px 8px;font-size:10px;color:#6b7280;">{detail}</td>' +
+                    '</tr>'
+                )
+            st.markdown(
+                '<div style="border:1px solid #e5e3de;border-radius:10px;overflow:hidden;margin-top:4px;">' +
+                '<table style="width:100%;border-collapse:collapse;">' +
+                '<thead><tr style="background:#f9f8f6;border-bottom:1px solid #e5e3de;">' +
+                '<th style="padding:5px 8px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Column</th>' +
+                '<th style="padding:5px 4px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Type</th>' +
+                '<th style="padding:5px 8px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Stats</th>' +
+                '</tr></thead><tbody>' + rows_html + '</tbody></table></div>',
+                unsafe_allow_html=True
+            )
 
         # ── CHARTS VIEW ───────────────────────────────
         elif view == "charts":

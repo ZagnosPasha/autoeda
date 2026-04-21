@@ -29,21 +29,62 @@ st.markdown("""
   }
   [data-testid="stSidebar"] > div:first-child {
       width: 52px !important;
-      padding: 0 !important;
+      padding: 4px 0 0 !important;
   }
+  /* Hide everything in sidebar uploader EXCEPT the button */
+  [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] { display: none !important; }
+  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] { display: none !important; }
+  /* Style the sidebar upload button as a clean + icon */
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+      width: 36px !important; height: 36px !important;
+      border-radius: 10px !important;
+      background: transparent !important;
+      border: 1px solid #e5e3de !important;
+      color: #6b7280 !important;
+      font-size: 18px !important;
+      padding: 0 !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+  }
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover {
+      background: #f3f4f6 !important; border-color: #6366f1 !important; color: #6366f1 !important;
+  }
+  /* Hide badge count and filename shown after upload */
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
+  [data-testid="stSidebar"] [data-testid="stUploadedFileData"],
+  [data-testid="stSidebar"] .uploadedFileName,
+  [data-testid="stSidebar"] small { display: none !important; }
 
-  /* ── Upload dropzone — home screen ── */
-  [data-testid="stFileUploadDropzone"] {
+  /* ── Upload dropzone — force light on all children ── */
+  [data-testid="stFileUploadDropzone"],
+  [data-testid="stFileUploadDropzone"] > div,
+  [data-testid="stFileUploadDropzone"] > div > div,
+  section[data-testid="stFileUploadDropzone"] {
       background: #ffffff !important;
-      border: 2px dashed #d1d5db !important;
+      border: 2px dashed #c7d2fe !important;
       border-radius: 16px !important;
-      padding: 32px !important;
   }
   [data-testid="stFileUploadDropzone"]:hover {
       border-color: #6366f1 !important;
+      background: #fafafe !important;
   }
-  [data-testid="stFileUploaderDropzoneInstructions"] {
+  [data-testid="stFileUploaderDropzoneInstructions"] span,
+  [data-testid="stFileUploaderDropzoneInstructions"] p,
+  [data-testid="stFileUploaderDropzoneInstructions"] small {
       color: #6b7280 !important;
+  }
+  /* Hide the file count badge on uploader button */
+  [data-testid="stFileUploaderDeleteBtn"],
+  .st-emotion-cache-1gulkj5,
+  [data-testid="stFileUploader"] span[data-testid="stMarkdownContainer"] {
+      display: none !important;
+  }
+  /* Upload button itself */
+  [data-testid="stFileUploader"] button,
+  [data-testid="baseButton-secondary"] {
+      background: #6366f1 !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 10px !important;
   }
 
   /* ── Home screen ── */
@@ -266,6 +307,7 @@ st.markdown("""
   div[data-testid="stHorizontalBlock"] > div > div > button:hover {
       background: #eef2ff !important;
       border-color: #6366f1 !important;
+      color: #4f46e5 !important;
   }
 
   /* Expanders in charts panel */
@@ -478,13 +520,26 @@ rail_col, chat_col, panel_col = st.columns([0.04, _chat_w, 0.38 if st.session_st
 # LEFT ICON RAIL
 # ════════════════════════════════════════════════════
 with rail_col:
+    # Logo
     st.markdown(
-        '<div style="display:flex;flex-direction:column;align-items:center;'
-        'padding:12px 0 0;gap:8px;">'
-        '<div style="font-size:17px;font-weight:800;color:#6366f1;margin-bottom:8px;">✦</div>'
+        '<div style="display:flex;flex-direction:column;align-items:center;padding:12px 0 4px;">'
+        '<div style="font-size:16px;font-weight:800;color:#6366f1;margin-bottom:10px;">✦</div>'
         '</div>',
         unsafe_allow_html=True
     )
+    # Panel toggle buttons — Stats / Charts / Data
+    for _icon, _view in [("📊", "stats"), ("📈", "charts"), ("🗂", "data")]:
+        _active = st.session_state.panel_open and st.session_state.panel_view == _view
+        _style = ("background:#eef2ff;border:1px solid #c7d2fe;" if _active
+                  else "background:transparent;border:1px solid transparent;")
+        if st.button(_icon, key=f"rail_{_view}", help=_view.capitalize(),
+                     use_container_width=True):
+            if _active:
+                st.session_state.panel_open = False
+            else:
+                st.session_state.panel_open = True
+                st.session_state.panel_view = _view
+            st.rerun()
 
 
 # ════════════════════════════════════════════════════

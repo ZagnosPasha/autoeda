@@ -31,60 +31,45 @@ st.markdown("""
       width: 52px !important;
       padding: 4px 0 0 !important;
   }
-  /* Hide everything in sidebar uploader EXCEPT the button */
-  [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] { display: none !important; }
-  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] { display: none !important; }
-  /* Style the sidebar upload button as a clean + icon */
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+  /* Sidebar: hide the entire file uploader widget — we trigger it via JS */
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] {
+      position: absolute !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 0 !important; height: 0 !important;
+      overflow: hidden !important;
+  }
+  /* Sidebar rail buttons */
+  [data-testid="stSidebar"] button {
       width: 36px !important; height: 36px !important;
       border-radius: 10px !important;
       background: transparent !important;
-      border: 1px solid #e5e3de !important;
+      border: 1px solid transparent !important;
       color: #6b7280 !important;
-      font-size: 18px !important;
+      font-size: 16px !important;
       padding: 0 !important;
+      margin: 0 auto !important;
       display: flex !important; align-items: center !important; justify-content: center !important;
   }
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover {
-      background: #f3f4f6 !important; border-color: #6366f1 !important; color: #6366f1 !important;
+  [data-testid="stSidebar"] button:hover {
+      background: #f3f4f6 !important;
+      border-color: #e5e3de !important;
+      color: #374151 !important;
   }
-  /* Hide badge count and filename shown after upload */
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
-  [data-testid="stSidebar"] [data-testid="stUploadedFileData"],
-  [data-testid="stSidebar"] .uploadedFileName,
-  [data-testid="stSidebar"] small { display: none !important; }
+  [data-testid="stSidebar"] button p {
+      color: inherit !important;
+      font-size: 16px !important;
+  }
 
-  /* ── Upload dropzone — force light on all children ── */
+  /* ── Global uploader: hide native chrome everywhere (we use custom HTML) ── */
   [data-testid="stFileUploadDropzone"],
   [data-testid="stFileUploadDropzone"] > div,
-  [data-testid="stFileUploadDropzone"] > div > div,
-  section[data-testid="stFileUploadDropzone"] {
-      background: #ffffff !important;
-      border: 2px dashed #c7d2fe !important;
-      border-radius: 16px !important;
-  }
-  [data-testid="stFileUploadDropzone"]:hover {
-      border-color: #6366f1 !important;
-      background: #fafafe !important;
-  }
-  [data-testid="stFileUploaderDropzoneInstructions"] span,
-  [data-testid="stFileUploaderDropzoneInstructions"] p,
-  [data-testid="stFileUploaderDropzoneInstructions"] small {
-      color: #6b7280 !important;
-  }
-  /* Hide the file count badge on uploader button */
+  section[data-testid="stFileUploadDropzone"],
+  [data-testid="stFileUploaderDropzoneInstructions"],
+  [data-testid="stUploadedFileData"],
   [data-testid="stFileUploaderDeleteBtn"],
-  .st-emotion-cache-1gulkj5,
-  [data-testid="stFileUploader"] span[data-testid="stMarkdownContainer"] {
+  [data-testid="stFileUploader"] > div > div:last-child {
       display: none !important;
-  }
-  /* Upload button itself */
-  [data-testid="stFileUploader"] button,
-  [data-testid="baseButton-secondary"] {
-      background: #6366f1 !important;
-      color: #ffffff !important;
-      border: none !important;
-      border-radius: 10px !important;
   }
 
   /* ── Home screen ── */
@@ -208,17 +193,22 @@ st.markdown("""
       padding: 12px 10% 20px;
       background: #f5f4f0;
   }
-  /* Chat input — force light background on all inner elements */
+  /* Chat input — override every possible dark-theme layer */
+  [data-testid="stChatInput"] *,
   [data-testid="stChatInput"],
   [data-testid="stChatInput"] > div,
   [data-testid="stChatInput"] > div > div,
-  [data-testid="stChatInput"] > div > div > div {
+  [data-testid="stChatInput"] > div > div > div,
+  [data-testid="stChatInput"] > div > div > div > div,
+  [data-testid="stBottomBlockContainer"],
+  [data-testid="stBottomBlockContainer"] > div,
+  [data-testid="stBottomBlockContainer"] > div > div {
       background: #ffffff !important;
-      border-radius: 16px !important;
   }
   [data-testid="stChatInput"] > div {
-      border: 1.5px solid #e5e3de !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+      border: 1.5px solid #e2e8f0 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
   }
   [data-testid="stChatInput"] textarea {
       background: #ffffff !important;
@@ -227,7 +217,12 @@ st.markdown("""
       caret-color: #6366f1 !important;
   }
   [data-testid="stChatInput"] textarea::placeholder {
-      color: #9ca3af !important;
+      color: #94a3b8 !important;
+  }
+  /* The bottom bar that holds the chat input */
+  [data-testid="stBottomBlockContainer"] {
+      background: #f5f4f0 !important;
+      padding: 8px 0 16px !important;
   }
 
   /* Right panel */
@@ -432,31 +427,8 @@ if not st.session_state.data_loaded:
       .block-container { padding: 0 !important; }
       .stApp { background: #f5f4f0 !important; }
 
-      /* Hide ALL native uploader chrome — we show our own box */
-      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"],
-      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"] > div,
-      [data-testid="stFileUploader"] small,
-      [data-testid="stFileUploader"] span,
-      [data-testid="stFileUploader"] p,
-      [data-testid="stFileUploaderDropzoneInstructions"] {
-          opacity: 0 !important;
-          pointer-events: none !important;
-          position: absolute !important;
-      }
-      /* Make the whole uploader widget transparent and overlay our box */
-      [data-testid="stFileUploader"] {
-          position: relative !important;
-      }
-      [data-testid="stFileUploadDropzone"] {
-          position: absolute !important;
-          top: 0; left: 0; right: 0; bottom: 0;
-          opacity: 0 !important;
-          cursor: pointer !important;
-          z-index: 2 !important;
-          background: transparent !important;
-          border: none !important;
-      }
-      /* Our visible upload box sits BEHIND the transparent native one */
+      /* Native uploader hidden — custom box handles visuals */
+      /* Our visible upload box */
       .custom-upload-box {
           background: #ffffff;
           border: 2px dashed #c7d2fe;
@@ -465,12 +437,28 @@ if not st.session_state.data_loaded:
           text-align: center;
           cursor: pointer;
           transition: border-color 0.2s, background 0.2s;
-          position: relative;
-          z-index: 1;
       }
       .custom-upload-box:hover {
           border-color: #6366f1;
           background: #fafaff;
+      }
+      /* Hide the native uploader completely — all states */
+      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"],
+      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"] *,
+      [data-testid="stFileUploader"] [data-testid="stUploadedFileData"],
+      [data-testid="stFileUploader"] [data-testid="stUploadedFileData"] *,
+      [data-testid="stFileUploader"] > div > div,
+      [data-testid="stFileUploader"] > div > div * {
+          display: none !important;
+      }
+      /* Keep the uploader div itself as an invisible click target */
+      [data-testid="stFileUploader"] {
+          position: relative !important;
+          margin-top: -220px !important;
+          height: 220px !important;
+          opacity: 0 !important;
+          cursor: pointer !important;
+          z-index: 10 !important;
       }
     </style>
     """, unsafe_allow_html=True)
@@ -547,9 +535,22 @@ missing_report = st.session_state.missing_report
 col_stats      = st.session_state.col_stats
 dt_names       = summary.get("datetime_col_names", [])
 
-# ── Hidden file uploader (triggered by rail button) ────────────────────────
+# ── Sidebar: uploader hidden by CSS, shown as clean button ───────────────────
 with st.sidebar:
-    new_file = st.file_uploader("new", type=["csv","xlsx"], label_visibility="collapsed", key="rail_upload")
+    # Logo at top
+    st.markdown(
+        '<div style="text-align:center;padding:10px 0 6px;">'
+        '<span style="font-size:16px;font-weight:800;color:#6366f1;">✦</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    # New file uploader — invisible widget, acts as the + button
+    new_file = st.file_uploader(
+        "+", type=["csv","xlsx"],
+        label_visibility="collapsed",
+        key="rail_upload",
+        help="Upload new file"
+    )
     if new_file is not None:
         fkey = new_file.name + str(new_file.size)
         if fkey != st.session_state.get("file_key"):
@@ -561,17 +562,18 @@ with st.sidebar:
                 cs2 = get_column_stats(df2)
                 with st.spinner("Analysing…"):
                     raw2 = generate_narrative(s2, mr2, cs2)
-                st.session_state.df             = df2
-                st.session_state.summary        = s2
-                st.session_state.missing_report = mr2
-                st.session_state.col_stats      = cs2
-                st.session_state.filename       = new_file.name
-                st.session_state.file_key       = fkey
-                st.session_state.chat_history   = [{"role": "ai", "content": md_to_html(raw2)}]
-                st.session_state.llm_history    = [{"role": "assistant", "content": raw2}]
-                st.session_state.panel_open     = True
-                st.session_state.panel_view     = "stats"
+                st.session_state.df              = df2
+                st.session_state.summary         = s2
+                st.session_state.missing_report  = mr2
+                st.session_state.col_stats       = cs2
+                st.session_state.filename        = new_file.name
+                st.session_state.file_key        = fkey
+                st.session_state.chat_history    = [{"role": "ai", "content": md_to_html(raw2)}]
+                st.session_state.llm_history     = [{"role": "assistant", "content": raw2}]
+                st.session_state.panel_open      = True
+                st.session_state.panel_view      = "stats"
                 st.session_state.suggestion_used = None
+                st.session_state.show_missing_chart = True
                 st.rerun()
 
 # ── Three-column layout: rail | chat | panel ───────────────────────────────

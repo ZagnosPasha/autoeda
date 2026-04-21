@@ -772,43 +772,75 @@ with panel_col:
                 col_type = s.get("type", "other")
                 miss_r = next((r for r in missing_report if r["column"] == col), {})
                 miss_pct = miss_r.get("pct", 0)
+
                 if col_type == "numeric":
                     row_bg = "#f0f4ff"
                     badge = '<span style="background:#eef2ff;color:#4f46e5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">NUM</span>'
-                    detail = f'mean {s.get("mean","?")} &nbsp; med {s.get("median","?")}'
+                    c_mean   = str(s.get("mean","—"))
+                    c_median = str(s.get("median","—"))
+                    c_extra  = str(s.get("std","—"))
+                    c_range  = f'{s.get("min","?")} – {s.get("max","?")}'
+                    hdr = ("Mean", "Median", "Std", "Range")
                 elif col_type == "text":
                     row_bg = "#f0fdf4"
                     badge = '<span style="background:#dcfce7;color:#15803d;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">TEXT</span>'
-                    mc = str(s.get("most_common","?"))[:14]
-                    detail = f'{s.get("unique_values","?")} uniq &nbsp; {mc}'
+                    c_mean   = str(s.get("unique_values","—"))
+                    c_median = str(s.get("most_common","—"))[:12]
+                    c_extra  = f'{s.get("top_pct","?")}%'
+                    c_range  = "—"
+                    hdr = ("Unique", "Top value", "Top %", "")
                 elif col_type == "datetime":
                     row_bg = "#fffbeb"
                     badge = '<span style="background:#fef9c3;color:#b45309;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">DATE</span>'
-                    detail = f'{s.get("min","?")} to {s.get("max","?")}'
+                    c_mean   = str(s.get("min","—"))
+                    c_median = str(s.get("max","—"))
+                    c_extra  = str(s.get("unique_values","—"))
+                    c_range  = "—"
+                    hdr = ("From", "To", "Unique", "")
                 else:
                     row_bg = "#f9f8f6"
                     badge = ""
-                    detail = ""
+                    c_mean = c_median = c_extra = c_range = "—"
+                    hdr = ("", "", "", "")
+
                 miss_html = ""
                 if miss_pct >= 10:
-                    miss_html = f'&nbsp;<span style="background:#fee2e2;color:#b91c1c;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
+                    miss_html = f' <span style="background:#fee2e2;color:#b91c1c;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
                 elif miss_pct > 0:
-                    miss_html = f'&nbsp;<span style="background:#fef3c7;color:#b45309;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
-                col_display = col if len(col) <= 16 else col[:15] + "..."
+                    miss_html = f' <span style="background:#fef3c7;color:#b45309;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;">{miss_pct}%</span>'
+
+                col_display = col if len(col) <= 14 else col[:13] + "…"
+
+                def cell(label, val):
+                    if not label:
+                        return '<td style="padding:4px 6px;"></td>'
+                    return (
+                        f'<td style="padding:4px 6px;">'
+                        f'<div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;">{label}</div>'
+                        f'<div style="font-size:10px;font-weight:600;color:#111827;white-space:nowrap;">{val}</div>'
+                        f'</td>'
+                    )
+
                 rows_html += (
-                    f'<tr style="background:{row_bg};border-bottom:1px solid #f0ede8;">' +
-                    f'<td style="padding:5px 8px;font-size:11px;font-weight:600;color:#111827;white-space:nowrap;">{col_display}{miss_html}</td>' +
-                    f'<td style="padding:5px 4px;">{badge}</td>' +
-                    f'<td style="padding:5px 8px;font-size:10px;color:#6b7280;">{detail}</td>' +
-                    '</tr>'
+                    f'<tr style="background:{row_bg};border-bottom:1px solid #f0ede8;">'
+                    f'<td style="padding:6px 8px;font-size:11px;font-weight:600;color:#111827;white-space:nowrap;max-width:80px;overflow:hidden;">'
+                    f'{col_display}{miss_html}</td>'
+                    f'<td style="padding:6px 4px;white-space:nowrap;">{badge}</td>'
+                    f'{cell(hdr[0], c_mean)}'
+                    f'{cell(hdr[1], c_median)}'
+                    f'{cell(hdr[2], c_extra)}'
+                    f'</tr>'
                 )
+
             st.markdown(
-                '<div style="border:1px solid #e5e3de;border-radius:10px;overflow:hidden;margin-top:4px;">' +
-                '<table style="width:100%;border-collapse:collapse;">' +
-                '<thead><tr style="background:#f9f8f6;border-bottom:1px solid #e5e3de;">' +
-                '<th style="padding:5px 8px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Column</th>' +
-                '<th style="padding:5px 4px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Type</th>' +
-                '<th style="padding:5px 8px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Stats</th>' +
+                '<div style="border:1px solid #e5e3de;border-radius:10px;overflow:hidden;margin-top:4px;overflow-x:auto;">'
+                '<table style="width:100%;border-collapse:collapse;">'
+                '<thead><tr style="background:#f9f8f6;border-bottom:1px solid #e5e3de;">'
+                '<th style="padding:5px 8px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">Column</th>'
+                '<th style="padding:5px 4px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Type</th>'
+                '<th style="padding:5px 6px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Stat 1</th>'
+                '<th style="padding:5px 6px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Stat 2</th>'
+                '<th style="padding:5px 6px;font-size:9px;color:#9ca3af;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Stat 3</th>'
                 '</tr></thead><tbody>' + rows_html + '</tbody></table></div>',
                 unsafe_allow_html=True
             )

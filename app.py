@@ -713,15 +713,19 @@ with chat_col:
     st.markdown('<div style="padding-top:12px;"></div>', unsafe_allow_html=True)
     user_input = st.chat_input("Ask anything about your data…")
     if user_input:
-        # ── Intercept dashboard/template requests ──────────────────────────
+        # ── Intercept dashboard/template requests (only if no template active) ─
         _dash_keywords = [
             "dashboard", "template", "sales dashboard", "make a dashboard",
             "create dashboard", "build dashboard", "show dashboard",
             "make dashboard", "generate dashboard"
         ]
-        _is_dash_request = any(kw in user_input.lower() for kw in _dash_keywords)
+        _is_dash_request = (
+            any(kw in user_input.lower() for kw in _dash_keywords)
+            and not st.session_state.get("tmpl_active")
+            and not st.session_state.get("tmpl_ready")
+        )
 
-        if _is_dash_request and not st.session_state.get("tmpl_active"):
+        if _is_dash_request:
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             st.session_state.chat_history.append({
                 "role": "ai",
@@ -732,7 +736,6 @@ with chat_col:
                     "3 quick questions to map your columns, then render the dashboard here.</p>"
                 )
             })
-            # Auto-open the template panel
             st.session_state.panel_open = True
             st.session_state.panel_view = "template"
             st.rerun()

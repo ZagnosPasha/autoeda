@@ -513,7 +513,7 @@ if not st.session_state.data_loaded:
             ✦ Perceiv
           </div>
           <div style="font-size:15px;color:#9ca3af;">
-            Upload a dataset — get instant AI analysis
+            Upload a CSV/Excel dataset — get instant AI analysis
           </div>
         </div>
         """, unsafe_allow_html=True)

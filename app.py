@@ -427,39 +427,59 @@ if not st.session_state.data_loaded:
       .block-container { padding: 0 !important; }
       .stApp { background: #f5f4f0 !important; }
 
-      /* Native uploader hidden — custom box handles visuals */
-      /* Our visible upload box */
-      .custom-upload-box {
-          background: #ffffff;
-          border: 2px dashed #c7d2fe;
-          border-radius: 16px;
-          padding: 40px 32px;
-          text-align: center;
-          cursor: pointer;
-          transition: border-color 0.2s, background 0.2s;
+      /* Style the native uploader to look like our design */
+      [data-testid="stFileUploadDropzone"] {
+          background: #ffffff !important;
+          border: 2px dashed #c7d2fe !important;
+          border-radius: 16px !important;
+          padding: 40px 32px !important;
+          text-align: center !important;
+          cursor: pointer !important;
+          min-height: 180px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
       }
-      .custom-upload-box:hover {
-          border-color: #6366f1;
-          background: #fafaff;
+      [data-testid="stFileUploadDropzone"]:hover {
+          border-color: #6366f1 !important;
+          background: #fafaff !important;
       }
-      /* Hide the native uploader completely — all states */
-      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"],
-      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"] *,
-      [data-testid="stFileUploader"] [data-testid="stUploadedFileData"],
-      [data-testid="stFileUploader"] [data-testid="stUploadedFileData"] *,
-      [data-testid="stFileUploader"] > div > div,
-      [data-testid="stFileUploader"] > div > div * {
+      /* Style the instructions text */
+      [data-testid="stFileUploaderDropzoneInstructions"] {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 8px !important;
+      }
+      [data-testid="stFileUploaderDropzoneInstructions"] span {
+          color: #1a1a1a !important;
+          font-size: 15px !important;
+          font-weight: 600 !important;
+      }
+      [data-testid="stFileUploaderDropzoneInstructions"] small {
+          color: #9ca3af !important;
+          font-size: 13px !important;
+      }
+      /* Style the Upload button inside dropzone */
+      [data-testid="stFileUploadDropzone"] button {
+          background: #6366f1 !important;
+          color: #ffffff !important;
+          border: none !important;
+          border-radius: 10px !important;
+          padding: 8px 20px !important;
+          font-size: 13px !important;
+          font-weight: 600 !important;
+          margin-top: 8px !important;
+      }
+      [data-testid="stFileUploadDropzone"] button:hover {
+          background: #4f46e5 !important;
+      }
+      /* Hide the selected-file row after picking — we process it immediately */
+      [data-testid="stUploadedFileData"] {
           display: none !important;
       }
-      /* Keep the uploader div itself as an invisible click target */
-      [data-testid="stFileUploader"] {
-          position: relative !important;
-          margin-top: -220px !important;
-          height: 220px !important;
-          opacity: 0 !important;
-          cursor: pointer !important;
-          z-index: 10 !important;
-      }
+      /* Remove the label above the uploader */
+      [data-testid="stFileUploader"] label { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -467,7 +487,7 @@ if not st.session_state.data_loaded:
     _, center, _ = st.columns([1, 1.6, 1])
     with center:
         st.markdown("""
-        <div style="text-align:center;padding-top:16vh;padding-bottom:36px;">
+        <div style="text-align:center;padding-top:16vh;padding-bottom:32px;">
           <div style="font-size:46px;font-weight:700;color:#1a1a1a;letter-spacing:-2px;margin-bottom:10px;">
             ✦ Perceiv
           </div>
@@ -477,18 +497,7 @@ if not st.session_state.data_loaded:
         </div>
         """, unsafe_allow_html=True)
 
-        # Custom styled box rendered ABOVE the native uploader
-        st.markdown("""
-        <div class="custom-upload-box">
-          <div style="font-size:32px;margin-bottom:12px;">📂</div>
-          <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:6px;">
-            Drop your CSV or Excel file here
-          </div>
-          <div style="font-size:13px;color:#9ca3af;">or click to browse &nbsp;·&nbsp; CSV, XLSX &nbsp;·&nbsp; up to 200MB</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Native uploader — invisible but functional, sits on top via z-index
+        # Native uploader — styled directly via CSS above
         uploaded = st.file_uploader(
             "upload",
             type=["csv", "xlsx"],

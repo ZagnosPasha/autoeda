@@ -40,35 +40,7 @@ st.markdown("""
       padding: 8px 6px 0 !important;
       overflow: hidden !important;
   }
-  /* Hide all uploader chrome — only the button shows */
-  [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"],
-  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"],
-  [data-testid="stSidebar"] [data-testid="stUploadedFileData"],
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] label,
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] small {
-      display: none !important;
-  }
-  /* Style the upload button as a clean icon button */
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
-      width: 44px !important; height: 44px !important;
-      border-radius: 10px !important;
-      background: #f3f4f6 !important;
-      border: 1px solid #e5e3de !important;
-      font-size: 18px !important;
-      padding: 0 !important;
-      margin: 0 auto 4px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-  }
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover {
-      background: #eef2ff !important;
-      border-color: #6366f1 !important;
-  }
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button span,
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] button p {
-      color: #374151 !important;
-  }
+
   /* All other sidebar buttons (panel toggles, future) */
   [data-testid="stSidebar"] button {
       width: 44px !important;
@@ -337,9 +309,12 @@ st.markdown("""
       margin-bottom: 6px;
   }
 
-  /* Suggestion chip buttons — white pill, indigo text */
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
+  /* Suggestion chip buttons — white pill, indigo text, ALL states */
+  [data-testid="stHorizontalBlock"] button[kind="secondary"],
+  [data-testid="stHorizontalBlock"] button[kind="secondaryFormSubmit"],
+  [data-testid="stHorizontalBlock"] button {
       background: #ffffff !important;
+      background-color: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
       border-radius: 20px !important;
       color: #4f46e5 !important;
@@ -347,13 +322,15 @@ st.markdown("""
       font-weight: 500 !important;
       box-shadow: none !important;
   }
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button:hover {
+  [data-testid="stHorizontalBlock"] button:hover {
       background: #f5f4f0 !important;
+      background-color: #f5f4f0 !important;
       border-color: #c7d2fe !important;
       color: #4f46e5 !important;
   }
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button p,
-  [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button span {
+  [data-testid="stHorizontalBlock"] button *,
+  [data-testid="stHorizontalBlock"] button p,
+  [data-testid="stHorizontalBlock"] button span {
       color: #4f46e5 !important;
   }
 
@@ -585,30 +562,11 @@ dt_names       = summary.get("datetime_col_names", [])
 
 # ── Single sidebar — icon rail with all navigation ──────────────────────────
 with st.sidebar:
-    # ── New file upload ────────────────────────────
-    new_file = st.file_uploader("upload", type=["csv","xlsx"],
-                                label_visibility="collapsed", key="rail_upload")
-    if new_file is not None:
-        fkey = new_file.name + str(new_file.size)
-        if fkey != st.session_state.get("file_key"):
-            with st.spinner("Loading…"):
-                df2 = load_data(new_file)
-            if df2 is not None:
-                s2  = get_summary(df2)
-                mr2 = get_missing_report(df2)
-                cs2 = get_column_stats(df2)
-                with st.spinner("Analysing…"):
-                    raw2 = generate_narrative(s2, mr2, cs2)
-                st.session_state.update({
-                    "df": df2, "summary": s2, "missing_report": mr2,
-                    "col_stats": cs2, "filename": new_file.name,
-                    "file_key": fkey,
-                    "chat_history": [{"role":"ai","content":md_to_html(raw2)}],
-                    "llm_history":  [{"role":"assistant","content":raw2}],
-                    "panel_open": True, "panel_view": "stats",
-                    "show_missing_chart": True, "suggestion_used": None,
-                })
-                st.rerun()
+    # ── New file upload — plain button, shows uploader in chat area ──
+    if st.button("＋", key="rail_newfile", help="Upload new file",
+                 use_container_width=True):
+        st.session_state.show_upload_widget = True
+        st.rerun()
 
     # ── Panel toggles ──────────────────────────────
     for _icon, _label, _view in [
@@ -646,6 +604,43 @@ with chat_col:
         f'✦ Perceiv &nbsp;·&nbsp; <span style="color:#6366f1;">{st.session_state.filename}</span></div>',
         unsafe_allow_html=True
     )
+
+    # New file upload modal — shown when + is clicked
+    if st.session_state.get("show_upload_widget"):
+        st.markdown(
+            '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;'
+            'padding:16px 20px;margin-bottom:12px;">',
+            unsafe_allow_html=True
+        )
+        st.markdown("**Upload a new file**")
+        _new = st.file_uploader("Drop CSV or Excel here", type=["csv","xlsx"],
+                                key="chat_new_upload")
+        if st.button("Cancel", key="cancel_upload"):
+            st.session_state.show_upload_widget = False
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        if _new is not None:
+            fkey2 = _new.name + str(_new.size)
+            if fkey2 != st.session_state.get("file_key"):
+                with st.spinner("Loading…"):
+                    _df2 = load_data(_new)
+                if _df2 is not None:
+                    _s2  = get_summary(_df2)
+                    _mr2 = get_missing_report(_df2)
+                    _cs2 = get_column_stats(_df2)
+                    with st.spinner("Analysing…"):
+                        _raw2 = generate_narrative(_s2, _mr2, _cs2)
+                    st.session_state.update({
+                        "df": _df2, "summary": _s2, "missing_report": _mr2,
+                        "col_stats": _cs2, "filename": _new.name,
+                        "file_key": fkey2,
+                        "chat_history": [{"role":"ai","content":md_to_html(_raw2)}],
+                        "llm_history":  [{"role":"assistant","content":_raw2}],
+                        "panel_open": True, "panel_view": "stats",
+                        "show_missing_chart": True, "suggestion_used": None,
+                        "show_upload_widget": False,
+                    })
+                    st.rerun()
 
     # Messages — rendered in a centered max-width container via CSS
     for msg in st.session_state.chat_history:

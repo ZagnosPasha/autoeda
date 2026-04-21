@@ -32,9 +32,18 @@ st.markdown("""
       padding: 0 !important;
   }
 
-  /* ── Upload area inside sidebar ── */
+  /* ── Upload dropzone — home screen ── */
   [data-testid="stFileUploadDropzone"] {
-      display: none !important;
+      background: #ffffff !important;
+      border: 2px dashed #d1d5db !important;
+      border-radius: 16px !important;
+      padding: 32px !important;
+  }
+  [data-testid="stFileUploadDropzone"]:hover {
+      border-color: #6366f1 !important;
+  }
+  [data-testid="stFileUploaderDropzoneInstructions"] {
+      color: #6b7280 !important;
   }
 
   /* ── Home screen ── */
@@ -356,20 +365,31 @@ for k, v in [
 # HOME SCREEN (before upload)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state.data_loaded:
+    # Hide sidebar on home screen
     st.markdown("""
-    <div class="home-wrap">
-      <div class="home-logo">✦ Perceiv</div>
-      <div class="home-sub">Upload a dataset — get instant AI analysis</div>
+    <style>
+      [data-testid="stSidebar"] { display: none !important; }
+      .block-container { padding: 0 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="display:flex;flex-direction:column;align-items:center;
+                padding-top:18vh;text-align:center;">
+      <div style="font-size:44px;font-weight:700;color:#1a1a1a;
+                  letter-spacing:-1.5px;margin-bottom:8px;">✦ Perceiv</div>
+      <div style="font-size:15px;color:#9ca3af;margin-bottom:48px;">
+        Upload a dataset — get instant AI analysis
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Centered upload widget using columns
-    _, center, _ = st.columns([1, 1.2, 1])
+    _, center, _ = st.columns([1, 1.4, 1])
     with center:
         uploaded = st.file_uploader(
-            "Upload CSV or Excel",
+            "Drop a CSV or Excel file here, or click to browse",
             type=["csv", "xlsx"],
-            label_visibility="collapsed"
+            label_visibility="visible"
         )
 
     if uploaded is not None:

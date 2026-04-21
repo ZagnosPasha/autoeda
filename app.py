@@ -765,15 +765,61 @@ with panel_col:
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown('<div class="col-section-label">Columns</div>', unsafe_allow_html=True)
+            st.markdown('<div class="col-section-label">Columns — click to expand</div>', unsafe_allow_html=True)
             for col in df.columns:
                 chip = col_chip_html(col, col_stats, dt_names, missing_report)
-                st.markdown(
-                    f'<div class="col-row">'
-                    f'<span class="col-name">{col}</span>'
-                    f'{chip}</div>',
-                    unsafe_allow_html=True
-                )
+                s = col_stats.get(col, {})
+                col_type = s.get("type", "other")
+                with st.expander(col, expanded=False):
+                    st.markdown(chip, unsafe_allow_html=True)
+                    if col_type == "numeric":
+                        r = s.get("min","?")
+                        rx = s.get("max","?")
+                        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px;margin-top:4px;">
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Mean</div>
+    <div style="font-weight:600;color:#111827;">{s.get("mean","?")}</div>
+  </div>
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Median</div>
+    <div style="font-weight:600;color:#111827;">{s.get("median","?")}</div>
+  </div>
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Std dev</div>
+    <div style="font-weight:600;color:#111827;">{s.get("std","?")}</div>
+  </div>
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Range</div>
+    <div style="font-weight:600;color:#111827;">{r} to {rx}</div>
+  </div>
+</div>
+<div style="font-size:11px;color:#6366f1;margin-top:4px;">{s.get("skew","")}</div>
+                        """, unsafe_allow_html=True)
+                    elif col_type == "text":
+                        mc = str(s.get("most_common","?"))[:24]
+                        tp = s.get("top_pct","?")
+                        uv = s.get("unique_values","?")
+                        st.markdown(f"""
+<div style="font-size:12px;display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <span style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Unique </span>
+    <span style="font-weight:600;color:#111827;">{uv}</span>
+  </div>
+  <div style="background:#f9f8f6;border-radius:6px;padding:5px 8px;">
+    <span style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Top </span>
+    <span style="font-weight:600;color:#111827;">{mc}</span>
+    <span style="color:#9ca3af;"> ({tp}%)</span>
+  </div>
+</div>
+                        """, unsafe_allow_html=True)
+                    elif col_type == "datetime":
+                        st.markdown(f"""
+<div style="font-size:12px;background:#f9f8f6;border-radius:6px;padding:5px 8px;margin-top:4px;">
+  <div style="color:#9ca3af;font-size:10px;text-transform:uppercase;">Range</div>
+  <div style="font-weight:600;color:#111827;">{s.get("min","?")} to {s.get("max","?")}</div>
+</div>
+                        """, unsafe_allow_html=True)
 
         # ── CHARTS VIEW ───────────────────────────────
         elif view == "charts":

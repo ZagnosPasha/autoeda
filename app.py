@@ -294,8 +294,10 @@ st.markdown("""
       margin-bottom: 6px;
   }
 
-  /* Suggestion buttons */
-  div[data-testid="stHorizontalBlock"] > div > div > button {
+  /* Suggestion chip buttons — all states */
+  div[data-testid="stHorizontalBlock"] > div > div > button,
+  div[data-testid="stHorizontalBlock"] > div > div > button:link,
+  div[data-testid="stHorizontalBlock"] > div > div > button:visited {
       background: #ffffff !important;
       border: 1px solid #d1d5db !important;
       border-radius: 20px !important;
@@ -304,9 +306,16 @@ st.markdown("""
       padding: 5px 14px !important;
       font-weight: 500 !important;
   }
-  div[data-testid="stHorizontalBlock"] > div > div > button:hover {
+  div[data-testid="stHorizontalBlock"] > div > div > button:hover,
+  div[data-testid="stHorizontalBlock"] > div > div > button:focus,
+  div[data-testid="stHorizontalBlock"] > div > div > button:active {
       background: #eef2ff !important;
       border-color: #6366f1 !important;
+      color: #4f46e5 !important;
+      outline: none !important;
+  }
+  div[data-testid="stHorizontalBlock"] > div > div > button > div,
+  div[data-testid="stHorizontalBlock"] > div > div > button p {
       color: #4f46e5 !important;
   }
 
@@ -417,31 +426,85 @@ for k, v in [
 # HOME SCREEN (before upload)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state.data_loaded:
-    # Hide sidebar on home screen
     st.markdown("""
     <style>
       [data-testid="stSidebar"] { display: none !important; }
       .block-container { padding: 0 !important; }
+      .stApp { background: #f5f4f0 !important; }
+
+      /* Hide ALL native uploader chrome — we show our own box */
+      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"],
+      [data-testid="stFileUploader"] [data-testid="stFileUploadDropzone"] > div,
+      [data-testid="stFileUploader"] small,
+      [data-testid="stFileUploader"] span,
+      [data-testid="stFileUploader"] p,
+      [data-testid="stFileUploaderDropzoneInstructions"] {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          position: absolute !important;
+      }
+      /* Make the whole uploader widget transparent and overlay our box */
+      [data-testid="stFileUploader"] {
+          position: relative !important;
+      }
+      [data-testid="stFileUploadDropzone"] {
+          position: absolute !important;
+          top: 0; left: 0; right: 0; bottom: 0;
+          opacity: 0 !important;
+          cursor: pointer !important;
+          z-index: 2 !important;
+          background: transparent !important;
+          border: none !important;
+      }
+      /* Our visible upload box sits BEHIND the transparent native one */
+      .custom-upload-box {
+          background: #ffffff;
+          border: 2px dashed #c7d2fe;
+          border-radius: 16px;
+          padding: 40px 32px;
+          text-align: center;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+          position: relative;
+          z-index: 1;
+      }
+      .custom-upload-box:hover {
+          border-color: #6366f1;
+          background: #fafaff;
+      }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="display:flex;flex-direction:column;align-items:center;
-                padding-top:18vh;text-align:center;">
-      <div style="font-size:44px;font-weight:700;color:#1a1a1a;
-                  letter-spacing:-1.5px;margin-bottom:8px;">✦ Perceiv</div>
-      <div style="font-size:15px;color:#9ca3af;margin-bottom:48px;">
-        Upload a dataset — get instant AI analysis
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    _, center, _ = st.columns([1, 1.4, 1])
+    # Centered layout
+    _, center, _ = st.columns([1, 1.6, 1])
     with center:
+        st.markdown("""
+        <div style="text-align:center;padding-top:16vh;padding-bottom:36px;">
+          <div style="font-size:46px;font-weight:700;color:#1a1a1a;letter-spacing:-2px;margin-bottom:10px;">
+            ✦ Perceiv
+          </div>
+          <div style="font-size:15px;color:#9ca3af;">
+            Upload a dataset — get instant AI analysis
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Custom styled box rendered ABOVE the native uploader
+        st.markdown("""
+        <div class="custom-upload-box">
+          <div style="font-size:32px;margin-bottom:12px;">📂</div>
+          <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:6px;">
+            Drop your CSV or Excel file here
+          </div>
+          <div style="font-size:13px;color:#9ca3af;">or click to browse &nbsp;·&nbsp; CSV, XLSX &nbsp;·&nbsp; up to 200MB</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Native uploader — invisible but functional, sits on top via z-index
         uploaded = st.file_uploader(
-            "Drop a CSV or Excel file here, or click to browse",
+            "upload",
             type=["csv", "xlsx"],
-            label_visibility="visible"
+            label_visibility="collapsed"
         )
 
     if uploaded is not None:
@@ -458,17 +521,18 @@ if not st.session_state.data_loaded:
         with st.spinner("Analysing…"):
             raw = generate_narrative(summary, missing_report, col_stats)
 
-        st.session_state.df             = df
-        st.session_state.summary        = summary
-        st.session_state.missing_report = missing_report
-        st.session_state.col_stats      = col_stats
-        st.session_state.filename       = uploaded.name
-        st.session_state.file_key       = uploaded.name + str(uploaded.size)
-        st.session_state.data_loaded    = True
-        st.session_state.chat_history   = [{"role": "ai", "content": md_to_html(raw)}]
-        st.session_state.llm_history    = [{"role": "assistant", "content": raw}]
-        st.session_state.panel_open     = True
-        st.session_state.panel_view     = "stats"
+        st.session_state.df              = df
+        st.session_state.summary         = summary
+        st.session_state.missing_report  = missing_report
+        st.session_state.col_stats       = col_stats
+        st.session_state.filename        = uploaded.name
+        st.session_state.file_key        = uploaded.name + str(uploaded.size)
+        st.session_state.data_loaded     = True
+        st.session_state.chat_history    = [{"role": "ai", "content": md_to_html(raw)}]
+        st.session_state.llm_history     = [{"role": "assistant", "content": raw}]
+        st.session_state.panel_open      = True
+        st.session_state.panel_view      = "stats"
+        st.session_state.show_missing_chart = True
         st.rerun()
 
     st.stop()

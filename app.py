@@ -45,8 +45,15 @@ st.markdown("""
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"],
   [data-testid="stSidebar"] [data-testid="stUploadedFileData"],
   [data-testid="stSidebar"] [data-testid="stFileUploader"] label,
-  [data-testid="stSidebar"] [data-testid="stFileUploader"] small {
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] small,
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] span:not(button span),
+  [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
       display: none !important;
+  }
+  /* Ensure only the button itself is visible */
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] > div {
+      display: flex !important;
+      justify-content: center !important;
   }
   /* Style the upload button as a clean icon button */
   [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
@@ -95,7 +102,8 @@ st.markdown("""
       color: #4f46e5 !important;
   }
   [data-testid="stSidebar"] button:disabled {
-      opacity: 0.25 !important;
+      opacity: 0.55 !important;
+      filter: grayscale(20%) !important;
   }
   [data-testid="stSidebar"] button p,
   [data-testid="stSidebar"] button span {
@@ -535,7 +543,7 @@ if not st.session_state.data_loaded:
             ✦ Perceiv
           </div>
           <div style="font-size:15px;color:#9ca3af;">
-            Upload a CSV/Excel dataset — get instant AI analysis
+            Upload a dataset — get instant AI analysis
           </div>
         </div>
         """, unsafe_allow_html=True)
